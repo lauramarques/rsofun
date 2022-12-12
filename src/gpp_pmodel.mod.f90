@@ -36,6 +36,7 @@ module md_gpp_pmodel
   use md_grid, only: gridtype
   use md_photosynth, only: pmodel, zero_pmodel, outtype_pmodel, calc_ftemp_inst_vcmax, calc_ftemp_inst_jmax, &
     calc_ftemp_inst_rd, calc_ftemp_kphio_tmin, calc_ftemp_kphio, calc_soilmstress
+  use md_photosynth_phydro
 
   implicit none
 
@@ -178,22 +179,42 @@ contains
           grid%dayl > 0.0 .and.                    &      ! no arctic night
           temp_memory > -5.0 ) then                       ! minimum temp threshold to avoid fpe
 
+
         !================================================================
         ! P-model call to get acclimated quantities as a function of the
         ! damped climate forcing.
         !----------------------------------------------------------------
-        out_pmodel = pmodel(  &
-                              kphio          = params_pft_gpp(pft)%kphio * ftemp_kphio, &
-                              beta           = params_gpp%beta, &
-                              ppfd           = ppfd_memory, &
-                              co2            = co2_memory, &
-                              tc             = temp_memory, &
-                              vpd            = vpd_memory, &
-                              patm           = patm_memory, &
-                              c4             = params_pft_plant(pft)%c4, &
-                              method_optci   = "prentice14", &
-                              method_jmaxlim = "wang17" &
-                              )
+        if (method_pmodel == "hydro"){
+
+          out_pmodel = phydro(  &
+                                ppfd           = ppfd_memory,  &
+                                co2            = co2_memory,   &
+                                tc             = temp_memory,  &
+                                vpd            = vpd_memory,   &
+                                patm           = patm_memory,  &
+                                method_optci   = "prentice14", &
+                                method_jmaxlim = "wang17" &
+                                params_pft_gpp(pft)%kphio * ftemp_kphio, &
+                                beta           = params_gpp%beta, &
+                                params_pft_plant, &
+                                )
+
+        } else {
+
+          out_pmodel = pmodel(  &
+                                kphio          = params_pft_gpp(pft)%kphio * ftemp_kphio, &
+                                beta           = params_gpp%beta, &
+                                ppfd           = ppfd_memory, &
+                                co2            = co2_memory, &
+                                tc             = temp_memory, &
+                                vpd            = vpd_memory, &
+                                patm           = patm_memory, &
+                                c4             = params_pft_plant(pft)%c4, &
+                                method_optci   = "prentice14", &
+                                method_jmaxlim = "wang17" &
+                                )
+
+        }
 
       else
 

@@ -35,6 +35,7 @@ module md_plant_pmodel
     real    :: sla                 ! specific leaf area (m2 gC-1)
     real    :: lma                 ! leaf mass per area (gC m-2)
     real    :: r_ntolma            ! constant ratio of structural N to C (LMA) (gN/gC)
+    real    :: conductivity        ! xxx jaideep xxx
   end type params_pft_plant_type
 
   type(params_pft_plant_type), dimension(npft) :: params_pft_plant
@@ -190,36 +191,44 @@ contains
     ! important: Keep this order of reading PFT parameters fixed.
     !----------------------------------------------------------------
     pft = 0
+
+    ! Tree, non N-fixing, evergreen
     if ( myinterface%params_siml%lTrE ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'tre' )
     end if
 
+    ! Tree, N-fixing, evergreen
     if ( myinterface%params_siml%lTNE ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'tne' )
     end if
 
+    ! Tree, non N-fixing, deciduous
     if ( myinterface%params_siml%lTrD ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'trd' )
     end if
 
+    ! Tree, N-fixing, deciduous
     if ( myinterface%params_siml%lTND ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'tnd' )
     end if
 
+    ! C3 grass, non-N-fixing
     if ( myinterface%params_siml%lGr3 ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'gr3' )
     end if
 
+    ! C3 grass, N-fixing
     if ( myinterface%params_siml%lGN3 ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'gn3' )
     end if
 
+    ! C4 grass, non-N-fixing
     if ( myinterface%params_siml%lGr4 ) then
       pft = pft + 1
       params_pft_plant(pft) = getpftparams( 'gr4' )
@@ -256,6 +265,7 @@ contains
       out_getpftparams%c3      = .true.
       out_getpftparams%c4      = .false.
       out_getpftparams%nfixer  = .false.
+      out_getpftparams%conductivity = myinterface%params_calib%conductivity !  XXX jaideep      
     else if (trim(pftname)=='gn3') then
       out_getpftparams%grass   = .true.
       out_getpftparams%tree    = .false.

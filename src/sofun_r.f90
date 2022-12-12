@@ -154,6 +154,9 @@ contains
     myinterface%params_calib%soilm_par_b           = real(par(3))
     myinterface%params_calib%tau_acclim_tempstress = real(par(4))
     myinterface%params_calib%par_shape_tempstress  = real(par(5))
+    myinterface%params_calib%new_calibratable_param= real(par(xxx jaideep ))
+
+    ! xxx jaideep: calibratable params
 
     !----------------------------------------------------------------
     ! GET VEGETATION COVER (fractional projective cover by PFT)
