@@ -9,7 +9,6 @@ module md_biosphere_pmodel
     getpar_modl_tile, diag_daily, diag_annual, init_annual
   use md_plant_pmodel, only: getpar_modl_plant
   use md_sofunutils, only: calc_patm
-  use md_soiltemp, only: soiltemp
 
   implicit none
 
@@ -35,6 +34,7 @@ contains
     ! contact: b.stocker@imperial.ac.uk
     !----------------------------------------------------------------
     use md_interface_pmodel, only: myinterface, outtype_biosphere
+    use md_sofunutils, only: daily2monthly
   
     ! return variable
     type(outtype_biosphere) :: out_biosphere
@@ -56,19 +56,19 @@ contains
       ! GET MODEL PARAMETERS
       ! read model parameters that may be varied for optimisation
       !----------------------------------------------------------------
-      ! if (verbose) print*, 'getpar_modl() ...'
+      if (verbose) print*, 'getpar_modl() ...'
       call getpar_modl_tile()
       call getpar_modl_plant()
       call getpar_modl_waterbal()
       call getpar_modl_gpp()
-      ! if (verbose) print*, '... done'
+      if (verbose) print*, '... done'
 
       !----------------------------------------------------------------
       ! Initialise pool variables and/or read from restart file (not implemented)
       !----------------------------------------------------------------
-      ! if (verbose) print*, 'initglobal_() ...'
+      if (verbose) print*, 'initglobal_() ...'
       call initglobal_tile( tile(:) )
-      ! if (verbose) print*, '... done'
+      if (verbose) print*, '... done'
 
     endif 
 
@@ -89,48 +89,48 @@ contains
       dayloop: do dm=1,ndaymonth(moy)
         doy=doy+1
 
-        ! if (verbose) print*,'----------------------'
-        ! if (verbose) print*,'YEAR, Doy ', myinterface%steering%year, doy
-        ! if (verbose) print*,'----------------------'
+        if (verbose) print*,'----------------------'
+        if (verbose) print*,'YEAR, Doy ', myinterface%steering%year, doy
+        if (verbose) print*,'----------------------'
 
         !----------------------------------------------------------------
-        ! initialise updated variables (fluxes)
+        ! initialise daily updated variables 
         !----------------------------------------------------------------
-        ! if (verbose) print*,'calling initdaily_() ...'
+        if (verbose) print*,'calling initdaily_() ...'
         call initdaily_tile_fluxes( tile_fluxes(:) )
-        ! if (verbose) print*,'... done.'
+        if (verbose) print*,'... done.'
 
         !----------------------------------------------------------------
         ! Get radiation based on daily temperature, sunshine fraction, and 
         ! elevation.
         !----------------------------------------------------------------
-        ! if (verbose) print*,'calling solar() ... '
-        ! if (verbose) print*,'    with argument lat = ', myinterface%grid%lat
-        ! if (verbose) print*,'    with argument elv = ', myinterface%grid%elv
-        ! if (verbose) print*,'    with argument dfsun (ann. mean) = ', sum( myinterface%climate(:)%dfsun / ndayyear )
-        ! if (verbose) print*,'    with argument dppfd (ann. mean) = ', sum( myinterface%climate(:)%dppfd / ndayyear )
+        if (verbose) print*,'calling solar() ... '
+        if (verbose) print*,'    with argument lat = ', myinterface%grid%lat
+        if (verbose) print*,'    with argument elv = ', myinterface%grid%elv
+        if (verbose) print*,'    with argument dfsun (ann. mean) = ', sum( myinterface%climate(:)%dfsun / ndayyear )
+        if (verbose) print*,'    with argument dppfd (ann. mean) = ', sum( myinterface%climate(:)%dppfd / ndayyear )
         call solar( tile_fluxes(:), &
                     myinterface%grid, & 
                     myinterface%climate(doy),  &
                     doy &
                     )
-        ! if (verbose) print*,'... done'
+        if (verbose) print*,'... done'
 
         !----------------------------------------------------------------
         ! update canopy and tile variables and simulate daily 
         ! establishment / sprouting
         !----------------------------------------------------------------
-        ! if (verbose) print*,'calling vegdynamics() ... '
+        if (verbose) print*,'calling vegdynamics() ... '
         call vegdynamics( tile(:), &
                           myinterface%vegcover(doy)%dfapar, &
                           myinterface%fpc_grid(:) &
                           )
-        ! if (verbose) print*,'... done'
+        if (verbose) print*,'... done'
 
         !----------------------------------------------------------------
         ! calculate GPP
         !----------------------------------------------------------------
-        ! if (verbose) print*,'calling gpp() ... '
+        if (verbose) print*,'calling gpp() ... '
         call gpp( tile(:), &
                   tile_fluxes(:), &
                   myinterface%pco2, &
@@ -142,29 +142,32 @@ contains
                   init_daily &
                   )
 
-        ! if (verbose) print*,'... done'
+        if (verbose) print*,'... done'
 
         !----------------------------------------------------------------
         ! get soil moisture, and runoff
         !----------------------------------------------------------------
-        ! if (verbose) print*,'calling waterbal() ... '
+        if (verbose) print*,'calling waterbal() ... '
         call waterbal(  tile(:), &
                         tile_fluxes(:), &
                         myinterface%grid, &
                         myinterface%climate(doy) &
                         )
-        ! if (verbose) print*,'... done'
+        if (verbose) print*,'... done'
 
-        !----------------------------------------------------------------
-        ! calculate soil temperature
-        !----------------------------------------------------------------
+        ! !----------------------------------------------------------------
+        ! ! calculate soil temperature
+        ! !----------------------------------------------------------------
         ! if (verbose) print*, 'calling soiltemp() ... '
-        call soiltemp(&
-                      tile(:)%soil, &
-                      myinterface%climate(:)%dtemp, &
-                      moy, & 
-                      doy & 
-                      )
+        ! call soiltemp(&
+        !               tile(:)%soil, &
+        !               myinterface%climate%dtemp(:), &
+        !               size(myinterface%grid), &
+        !               myinterface%steering%init, &
+        !               jpngr, & 
+        !               moy, & 
+        !               doy & 
+        !               )
         ! if (verbose) print*, '... done'
 
         !----------------------------------------------------------------
@@ -175,7 +178,7 @@ contains
         !----------------------------------------------------------------
         ! populate function return variable
         !----------------------------------------------------------------
-        ! if (nlu>1) stop 'think about nlu > 1'
+        if (nlu>1) stop 'think about nlu > 1'
         out_biosphere%fapar(doy)   = tile(1)%canopy%fapar
         out_biosphere%gpp(doy)     = tile_fluxes(1)%canopy%dgpp
         out_biosphere%transp(doy)  = tile_fluxes(1)%canopy%daet
@@ -189,8 +192,6 @@ contains
         out_biosphere%wscal(doy)   = tile(1)%soil%phy%wscal
         out_biosphere%chi(doy)     = tile_fluxes(1)%canopy%chi
         out_biosphere%iwue(doy)    = tile_fluxes(1)%canopy%iwue
-        out_biosphere%rd(doy)      = tile_fluxes(1)%canopy%drd
-        out_biosphere%tsoil(doy)   = tile(1)%soil%phy%temp    
 
         init_daily = .false.
 
@@ -204,7 +205,7 @@ contains
     call diag_annual( tile(:), tile_fluxes(:) )
     
 
-    ! if (verbose) print*,'Done with biosphere for this year. Guete Rutsch!'
+    if (verbose) print*,'Done with biosphere for this year. Guete Rutsch!'
 
   end function biosphere_annual
 

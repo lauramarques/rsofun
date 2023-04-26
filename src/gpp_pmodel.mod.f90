@@ -147,8 +147,8 @@ contains
     patm_memory = dampen_variability( climate_acclimation%dpatm, params_gpp%tau_acclim, patm_memory )
     ppfd_memory = dampen_variability( climate_acclimation%dppfd, params_gpp%tau_acclim, ppfd_memory )
 
-    ! ! separate time scale for minimum temperature stress
-    ! tmin_memory = dampen_variability( climate_acclimation%dtmin, params_gpp%tau_acclim_tempstress, tmin_memory )
+    ! separate time scale for minimum temperature stress
+    tmin_memory = dampen_variability( climate_acclimation%dtmin, params_gpp%tau_acclim_tempstress, tmin_memory )
 
     ! if (count < 5) print*,'B count, tau_acclim_tempstress, dtmin, tmin_memory', count, params_gpp%tau_acclim_tempstress, climate_acclimation%dtmin, tmin_memory
 
@@ -163,12 +163,7 @@ contains
       ! Low-temperature effect on quantum yield efficiency 
       !----------------------------------------------------------------
       ! take the slowly varying temperature for governing quantum yield variations
-      if (do_tempstress) then
-        ftemp_kphio = calc_ftemp_kphio( temp_memory, params_pft_plant(pft)%c4 ) & 
-          * calc_ftemp_kphio_tmin( climate_acclimation%dtmin, params_gpp%par_shape_tempstress )
-      else
-        ftemp_kphio = 1.0
-      end if
+      ftemp_kphio = calc_ftemp_kphio( temp_memory, params_pft_plant(pft)%c4 ) * calc_ftemp_kphio_tmin( tmin_memory, params_gpp%par_shape_tempstress )
 
       !----------------------------------------------------------------
       ! P-model call to get a list of variables that are 
@@ -176,11 +171,10 @@ contains
       !----------------------------------------------------------------
       if (tile(lu)%plant(pft)%fpc_grid > 0.0 .and. &      ! PFT is present
           grid%dayl > 0.0 .and.                    &      ! no arctic night
-          temp_memory > -5.0 ) then                       ! minimum temp threshold to avoid fpe
+          temp_memory > -5.0 ) then                      ! minimum temp threshold to avoid fpe
 
-        !================================================================
-        ! P-model call to get acclimated quantities as a function of the
-        ! damped climate forcing.
+        !----------------------------------------------------------------
+        ! With fAPAR = 1.0 (full light) for simulating Vcmax25
         !----------------------------------------------------------------
         out_pmodel = pmodel(  &
                               kphio          = params_pft_gpp(pft)%kphio * ftemp_kphio, &
@@ -203,18 +197,14 @@ contains
       end if
 
       ! simple:
-      ! if (nlu > 1) stop 'gpp: think about nlu > 1'
+      if (nlu > 1) stop 'gpp: think about nlu > 1'
       lu = 1
 
-      !================================================================
-      ! Instantaneous responses using the acclimated photosynthetic 
-      ! capacities.
       !----------------------------------------------------------------
       ! Calculate soil moisture stress as a function of soil moisture, mean alpha and vegetation type (grass or not)
       !----------------------------------------------------------------
       if (do_soilmstress) then
-        soilmstress = calc_soilmstress( tile(1)%soil%phy%wscal, 0.0, params_pft_plant(1)%grass, &
-        params_gpp%soilm_par_a, params_gpp%soilm_par_b )
+        soilmstress = calc_soilmstress( tile(1)%soil%phy%wscal, 0.0, params_pft_plant(1)%grass, params_gpp%soilm_par_a, params_gpp%soilm_par_b )
       else
         soilmstress = 1.0
       end if    
@@ -224,15 +214,20 @@ contains
       ! This still does a linear scaling of daily GPP - knowingly wrong
       ! but not too dangerous...
       !----------------------------------------------------------------
-      tile_fluxes(lu)%plant(pft)%dgpp = tile(lu)%plant(pft)%fpc_grid * tile(lu)%canopy%fapar &
-        * climate%dppfd * myinterface%params_siml%secs_per_tstep * out_pmodel%lue * soilmstress
+      tile_fluxes(lu)%plant(pft)%dgpp = tile(lu)%plant(pft)%fpc_grid * tile(lu)%canopy%fapar * climate%dppfd * myinterface%params_siml%secs_per_tstep * out_pmodel%lue * soilmstress
       
+      !! print*,'gpp',tile_fluxes(lu)%plant(pft)%dgpp
+      !! print*,'fpcgrid',tile(lu)%plant(pft)%fpc_grid
+      !! print*,'fapar',tile(lu)%canopy%fapar
+      !! print*,'ppfd', climate%dppfd
+      !! print*,'secspertstep', myinterface%params_siml%secs_per_tstep
+      !! print*,'lue', out_pmodel%lue
+      !! print*,'soilmstress', soilmstress
+
       !----------------------------------------------------------------
       ! Dark respiration
       !----------------------------------------------------------------
-      tile_fluxes(lu)%plant(pft)%drd = tile(lu)%plant(pft)%fpc_grid * tile(lu)%canopy%fapar &
-        * out_pmodel%vcmax25 * params_gpp%rd_to_vcmax * calc_ftemp_inst_rd( climate%dtemp ) * c_molmass &
-        * myinterface%params_siml%secs_per_tstep
+      tile_fluxes(lu)%plant(pft)%drd = tile(lu)%plant(pft)%fpc_grid * tile(lu)%canopy%fapar * out_pmodel%vcmax25 * calc_ftemp_inst_rd( climate%dtemp ) * c_molmass
 
       !----------------------------------------------------------------
       ! Vcmax and Jmax
@@ -511,6 +506,8 @@ contains
     !////////////////////////////////////////////////////////////////
     ! Subroutine reads module-specific parameters from input file.
     !----------------------------------------------------------------
+    use md_sofunutils, only: getparreal
+
     ! local variables
     integer :: pft
 

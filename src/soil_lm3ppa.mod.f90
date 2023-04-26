@@ -1,10 +1,10 @@
-! The subroutines are from BiomeESS, the version used in Weng et al. 2016.
+! The subroutines are from LM3PPA, the version used in Weng et al. 2016.
 ! This simulator can simulate evolutionarily stable strategy (ESS) of LMA
 ! and reproduce the forest succession patterns shown in Weng et al.,
 ! 2016 Global Change Biology along the graidient of temperature. 
 
-module md_soil_biomee
- use md_interface_biomee, only: myinterface
+module md_soil_lm3ppa
+ use md_interface_lm3ppa, only: myinterface
  use datatypes
  implicit none
  private
@@ -33,7 +33,7 @@ contains ! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 !========================================================================
 ! Weng 2017-10-18 ! compute available water for photosynthesis
 subroutine water_supply_layer( vegn)
-  use md_forcing_biomee, only: climate_type
+  use md_forcing_lm3ppa, only: climate_type
   type(vegn_tile_type), intent(inout) :: vegn
 
 !----- local var --------------
@@ -61,7 +61,7 @@ subroutine water_supply_layer( vegn)
      do j = 1, vegn%n_cohorts
         cc => vegn%cohorts(j)
         associate ( sp => spdata(cc%species) )
-        cc%WupL(i) = cc%rootareaL(i)*sp%Kw_root*dpsiSR(i) * (myinterface%step_seconds*h2o_molmass*1e-3) ! kg H2O tree-1 step-1
+        cc%WupL(i) = cc%rootareaL(i)*sp%Kw_root*dpsiSR(i) * (myinterface%step_seconds*mol_h2o) ! kg H2O tree-1 step-1
         totWsup(i) = totWsup(i) + cc%WupL(i) * cc%nindivs ! water uptake per layer by all cohorts
         end associate
      enddo
@@ -86,9 +86,7 @@ subroutine water_supply_layer( vegn)
 subroutine SoilWaterDynamicsLayer(forcing,vegn)    !outputs
 !     All of inputs, the unit of water is 'mm',
 !     soil moisture (soil water content) is a ratio
-  use md_forcing_biomee, only: climate_type
-  use md_params_core, only: kR
-
+  use md_forcing_lm3ppa, only: climate_type
   type(vegn_tile_type), intent(inout) :: vegn
   type(climate_type),intent(in):: forcing
 
@@ -114,10 +112,10 @@ subroutine SoilWaterDynamicsLayer(forcing,vegn)    !outputs
   real    :: WaterBudgetL(max_lev)
   integer :: i,j
 
-  ! Soil water conditions
+! Soil water conditions
   !call water_supply_layer(forcing, vegn)
 
-  ! Water uptaken by roots, hourly
+! Water uptaken by roots, hourly
   WaterBudgetL = 0.0
   vegn%transp = 0.0
   do j = 1, vegn%n_cohorts
@@ -155,18 +153,18 @@ subroutine SoilWaterDynamicsLayer(forcing,vegn)    !outputs
       Hgrownd = 0.0
       TairK = forcing%Tair
       Tair  = forcing%Tair - 273.16
-      rhocp = cp * 1.0e3 * forcing%P_air * kMa * 1e-3 / (kR * TairK)
-      H2OLv = H2oLv0 - 2.365e3 * Tair
+      rhocp = cpair * forcing%P_air * mol_air / (Rugas*TairK)
+      H2OLv =H2oLv0 - 2.365e3*Tair
       RH = forcing%RH  ! Check forcing's unit of humidity
       Dair  = calc_esat(Tair)*(1.0 - RH)
       slope = (calc_esat(Tair+0.1)-calc_esat(Tair))/0.1
-      psyc = forcing%P_air * cp * 1.0e3 * kMa / (H2OLv * h2o_molmass)
-      Cmolar = forcing%P_air/(kR * TairK) ! mole density of air (mol/m3)
+      psyc=forcing%P_air*cpair*mol_air/(H2OLv*mol_h2o)
+      Cmolar=forcing%P_air/(Rugas*TairK) ! mole density of air (mol/m3)
       rsoil = exp(8.206-4.255*fldcap) ! s m-1, Liu Yanlan et al. 2017, PNAS
       !Rsoil=3.0E+10 * (FILDCP-vegn%wcl(1))**16 ! Kondo et al. 1990
       !rsoil=7500 * exp(-50.0*vegn%wcl(1))  ! s m-1
-      raero = 50./(forcing%windU + 0.2)
-      rLAI = exp(vegn%LAI)
+      raero=50./(forcing%windU + 0.2)
+      rLAI=exp(vegn%LAI)
 !     latent heat flux into air from soil
 !           Eleaf(ileaf)=1.0*
 !     &     (slope*Y*Rnstar(ileaf)+rhocp*Dair/(rbH_L+raero))/    !2* Weng 0215
@@ -423,9 +421,9 @@ subroutine cohort_root_properties(cohort, dz, vrl, K_r, r_r)
   z = 0
   do l = 1, size(dz)
      ! calculate the volumetric fine root biomass density [kgC/m3] for current layer
-     ! NOTE: sum(brv*dz) must be equal to cohort%proot%c%c12, which is achieved by normalizing
+     ! NOTE: sum(brv*dz) must be equal to cohort%br, which is achieved by normalizing
      ! factor
-     vbr = cohort%proot%c%c12 * &
+     vbr = cohort%br * &
           (exp(-z/cohort%root_zeta) - exp(-(z+dz(l))/cohort%root_zeta))*factor/dz(l)
      ! calculate the volumetric fine root length
      vrl(l) = vbr*spdata(sp)%srl
@@ -442,14 +440,12 @@ end subroutine
 ! calculates vertical distribution of active roots: given layer thicknesses,
 ! returns fraction of active roots per level
 subroutine cohort_uptake_profile(cohort, dz, uptake_frac_max, vegn_uptake_term)
-
   type(cohort_type), intent(in)  :: cohort
   real, intent(in)  :: dz(:)
   real, intent(out) :: uptake_frac_max(:)
   real, intent(out) :: vegn_uptake_term(:)
 
-  real, parameter :: res_scaler = kMa / h2o_molmass  ! scaling factor for water supply
-
+  real, parameter :: res_scaler = mol_air/mol_h2o  ! scaling factor for water supply
   ! NOTE: there is an inconsistency there between the 
   ! units of stomatal conductance [mol/(m2 s)], and the units of humidity deficit [kg/kg],
   ! in the calculations of water demand. Since the uptake options other than LINEAR can't 
@@ -474,17 +470,17 @@ subroutine cohort_uptake_profile(cohort, dz, uptake_frac_max, vegn_uptake_term)
   if(sum_rf>0) &
        uptake_frac_max(:) = uptake_frac_max(:)/sum_rf
   
-  if (cohort%proot%c%c12 <= 0) then
+  if (cohort%br <= 0) then
      vegn_uptake_term(:) = 0.0
   else   
      vegn_uptake_term(:) = uptake_frac_max(:) * &
-          res_scaler * spdata(cohort%species)%root_r * cohort%proot%c%c12
+          res_scaler * spdata(cohort%species)%root_r * cohort%br
   endif
 
 end subroutine 
 ! ================================================
 
-end module md_soil_biomee
+end module md_soil_lm3ppa
 
 
 

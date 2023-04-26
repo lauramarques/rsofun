@@ -2,7 +2,7 @@ module md_photosynth
   !//////////////////////////////////////////////////////////////////////
   ! P-MODEL PHOTOSYNTHESIS MODULE
   ! Is in a separate module here because two different md_gpp modules 
-  ! (gpp_biomee_pmodel, and gpp_pmodel) use it and interact with different 
+  ! (gpp_lm3ppa_pmodel, and gpp_pmodel) use it and interact with different 
   ! model structures.
   !------------------------------------------------------------------------
   use md_params_core, only: kPo, c_molmass, dummy
@@ -111,7 +111,7 @@ contains
     real :: mprime              ! factor in light use model with Jmax limitation
     real :: iwue                ! intrinsic water use efficiency = A / gs = ca - ci = ca ( 1 - chi ) , unitless
     real :: lue                 ! light use efficiency (mol CO2 / mol photon)
-    real :: gpp                 ! gross primary productivity (g CO2 m-2 d-1)
+    ! real :: gpp                 ! gross primary productivity (g CO2 m-2 d-1)
     real :: jmax                ! canopy-level maximum rate of electron transport (XXX)
     real :: jmax25              ! canopy-level maximum rate of electron transport (XXX)
     real :: vcmax               ! canopy-level maximum carboxylation capacity per unit ground area (mol CO2 m-2 s-1)
@@ -150,27 +150,24 @@ contains
     gammastar = calc_gammastar( tc, patm )
 
     ! XXX PMODEL_TEST: ok
-    ! print*,'--------------------------------------'
-    ! print*,'kphio:     ', kphio
-    ! print*,'tc:        ', tc
-    ! print*,'patm       ', patm
-    ! print*,'vpd:       ', vpd
-    ! print*,'ca :       ', ca
-    ! print*,'gammastar: ', gammastar
+    ! print*,'tc        ', tc
+    ! print*,'patm      ', patm
+    ! print*,'vpd       : ', vpd
+    ! print*,'gammastar ', gammastar
 
     ! Michaelis-Menten coef. (Pa)
     kmm  = calc_kmm( tc, patm )
     
-    ! XXX PMODEL_TEST: ok
-    ! print*,'kmm:       ', kmm
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'kmm ', kmm
 
     ! viscosity correction factor = viscosity( temp, press )/viscosity( 25 degC, 1013.25 Pa) 
     ns      = calc_viscosity_h2o( tc, patm )  ! Pa s 
     ns25    = calc_viscosity_h2o( 25.0, kPo )  ! Pa s 
     ns_star = ns / ns25                       ! (unitless)
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'ns_star:   ', ns_star
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'ns_star ', ns_star
 
     !-----------------------------------------------------------------------
     ! Optimal ci
@@ -193,7 +190,7 @@ contains
         
         case default
 
-          ! stop 'PMODEL: select valid method'
+          stop 'PMODEL: select valid method'
 
       end select
 
@@ -202,8 +199,8 @@ contains
     ! ratio of leaf internal to ambient CO2
     chi = out_optchi%chi
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'chi ', chi
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'chi ', chi
 
     ! leaf-internal CO2 partial pressure (Pa)
     ci = out_optchi%ci
@@ -242,7 +239,8 @@ contains
       ! Vcmax after accounting for Jmax limitation
       vcmax = kphio * ppfd * out_optchi%mjoc * mprime / out_optchi%mj
 
-      ! xxx test
+      ! ! xxx test
+      ! print*,'kphio           : ', kphio
       ! print*,'out_optchi%mjoc : ', out_optchi%mjoc 
       ! print*,'mprime          : ', mprime
       ! print*,'out_optchi%mj   : ', out_optchi%mj
@@ -291,24 +289,24 @@ contains
 
     else
 
-      ! stop 'PMODEL: select valid method'
+      stop 'PMODEL: select valid method'
 
     end if
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'mj ', out_optchi%mj
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'mj ', out_optchi%mj
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'chi ', chi
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'chi ', chi
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'mprime ', mprime
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'mprime ', mprime
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'lue ', lue
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'lue ', lue
 
-    ! XXX PMODEL_TEST: ok
-    ! print*,'kphio ', kphio
+    ! ! XXX PMODEL_TEST: ok
+    ! print*, 'kphio ', kphio
 
     !-----------------------------------------------------------------------
     ! Corrolary preditions (This is prelimirary!)
@@ -331,7 +329,7 @@ contains
       jmax25 = 0.0
     else
       fact_jmaxlim = vcmax * (ci + 2.0 * gammastar) / (kphio * ppfd * (ci + kmm))
-      ! print*,'fact_jmaxlim       ', fact_jmaxlim
+      !print*,'fact_jmaxlim       ', fact_jmaxlim
       if (fact_jmaxlim >= 1 .or. fact_jmaxlim <= 0) then
         jmax = dummy
       else
@@ -386,7 +384,7 @@ contains
     !     iabs = fapar * ppfd 
 
     !     ! XXX PMODEL_TEST: ok
-    !     ! print*,'iabs ', iabs
+    !     ! print*, 'iabs ', iabs
 
     !     ! Canopy-level quantities 
     !     ! Defined per unit ground level -> scaling with aborbed light (iabs)
@@ -395,26 +393,26 @@ contains
     !     gpp = iabs * lue ! in g C m-2 s-1
 
     !     ! ! XXX PMODEL_TEST: ok
-    !     ! print*,'gpp ', gpp
+    !     ! print*, 'gpp ', gpp
 
     !     ! Vcmax per unit ground area is the product of the intrinsic quantum 
     !     ! efficiency, the absorbed PAR, and 'n'
     !     vcmax = iabs * vcmax_unitiabs  ! = iabs * kphio * n 
 
     !     ! ! XXX PMODEL_TEST: ok
-    !     ! print*,'vcmax ', vcmax
+    !     ! print*, 'vcmax ', vcmax
 
     !     ! (vcmax normalized to 25 deg C)
     !     vcmax25 = iabs * vcmax25_unitiabs  ! = factor25_vcmax * vcmax
 
     !     ! ! XXX PMODEL_TEST: ok
-    !     !print*,'vcmax25 ', vcmax25
-    !     !print*,'vcmax25 ', vcmax25_unitiabs
+    !     !print*, 'vcmax25 ', vcmax25
+    !     !print*, 'vcmax25 ', vcmax25_unitiabs
     !     ! Dark respiration
     !     ! rd = iabs * rd_unitiabs ! = rd_to_vcmax * vcmax
 
     !     ! ! XXX PMODEL_TEST: ok
-    !     ! print*,'rd ', rd
+    !     ! print*, 'rd ', rd
 
     !     ! active metabolic leaf N (canopy-level), mol N/m2-ground (same equations as for nitrogen content per unit leaf area, gN/m2-leaf)
     !     actnv = iabs * actnv_unitiabs ! = vcmax25 * n_v
@@ -629,7 +627,7 @@ contains
     if (mprime > 0) then
       mprime = sqrt(mprime)
     else
-      ! print*,'negative mprime (', mprime, '). Setting to zero.'
+      print*,'negative mprime (', mprime, '). Setting to zero.'
       mprime = 0.0
     end if 
     
@@ -1230,7 +1228,7 @@ contains
       mu1 = mu1 + coef1 * coef2    
     end do
     mu1 = exp( rbar * mu1 )
-    ! print*,'mu1 ', mu1
+    ! print*, 'mu1 ', mu1
 
     ! Calculate mu_bar (Eq. 2, Huber et al., 2009)
     !   assumes mu2 = 1

@@ -7,7 +7,7 @@ module sofun_r_mod
   implicit none
 
   private
-  public :: pmodel_f, biomee_f
+  public :: pmodel_f, lm3ppa_f
 
 contains
 
@@ -81,7 +81,7 @@ contains
     integer(kind=c_int),  intent(in) :: nt ! number of time steps
     real(kind=c_double),  dimension(5), intent(in) :: par  ! free (calibratable) model parameters
     real(kind=c_double),  dimension(nt,13), intent(in) :: forcing  ! array containing all temporally varying forcing data (rows: time steps; columns: 1=air temperature, 2=rainfall, 3=vpd, 4=ppfd, 5=net radiation, 6=sunshine fraction, 7=snowfall, 8=co2, 9=N-deposition, 10=fapar) 
-    real(kind=c_double),  dimension(nt,15), intent(out) :: output
+    real(kind=c_double),  dimension(nt,13), intent(out) :: output
 
     ! local variables
     type(outtype_biosphere) :: out_biosphere  ! holds all the output used for calculating the cost or maximum likelihood function 
@@ -222,8 +222,6 @@ contains
         output(idx_start:idx_end,11) = dble(out_biosphere%wscal(:))
         output(idx_start:idx_end,12) = dble(out_biosphere%chi(:))
         output(idx_start:idx_end,13) = dble(out_biosphere%iwue(:))
-        output(idx_start:idx_end,14) = dble(out_biosphere%rd(:))
-        output(idx_start:idx_end,15) = dble(out_biosphere%tsoil(:))
 
       end if
 
@@ -233,7 +231,7 @@ contains
 
   !//////////////////////////////////////////////////////////////////////////
 
-  subroutine biomee_f(            &
+  subroutine lm3ppa_f(            &
     spinup,                       &   
     spinupyears,                  &        
     recycle,                      &    
@@ -339,21 +337,21 @@ contains
     output_annual_cohorts_n_deadtrees,  &
     output_annual_cohorts_c_deadtrees,  &
     output_annual_cohorts_deathrate  &
-    ) bind(C, name = "biomee_f_")
-     
+    ) bind(C, name = "lm3ppa_f_")
+
     !////////////////////////////////////////////////////////////////
     ! Main subroutine to handle I/O with C and R. 
     ! Receives simulation parameters, site parameters, and the full 
     ! simulation's forcing as time series
     ! test xxx
     !----------------------------------------------------------------
-    use md_params_siml_biomee, only: getsteering
-    ! use md_params_soil_biomee, only: getsoil
-    use md_forcing_biomee, only: getclimate, getco2, climate_type !, forcingData
-    use md_interface_biomee, only: interfacetype_biosphere, outtype_biosphere, myinterface
+    use md_params_siml_lm3ppa, only: getsteering
+    ! use md_params_soil_lm3ppa, only: getsoil
+    use md_forcing_lm3ppa, only: getclimate, getco2, climate_type !, forcingData
+    use md_interface_lm3ppa, only: interfacetype_biosphere, outtype_biosphere, myinterface
     use md_params_core, only: n_dim_soil_types, MSPECIES, MAX_INIT_COHORTS, ntstepsyear, out_max_cohorts, &
       ndayyear, nvars_daily_tile, nvars_hourly_tile, nvars_daily_cohorts, nvars_annual_cohorts, nvars_annual_tile
-    use md_biosphere_biomee, only: biosphere_annual
+    use md_biosphere_lm3ppa, only: biosphere_annual
 
     implicit none
 
@@ -377,7 +375,7 @@ contains
     real(kind=c_double),  intent(in) :: latitude
     real(kind=c_double),  intent(in) :: altitude
 
-    ! Tile parameters
+   !  ! Tile parameters
     integer(kind=c_int), intent(in) :: soiltype
     real(kind=c_double), intent(in) :: FLDCAP
     real(kind=c_double), intent(in) :: WILTPT
@@ -418,6 +416,7 @@ contains
     real(kind=c_double), dimension(nt,13), intent(in) :: forcing
 
     real(kind=c_double), dimension(nt,nvars_hourly_tile), intent(out) :: output_hourly_tile ! nvars_hourly_tile = 15
+
     real(kind=c_double), dimension(nt_daily,nvars_daily_tile), intent(out) :: output_daily_tile ! nvars_daily_tile = 35    
 
     real(kind=c_double), dimension(nt_daily,out_max_cohorts), intent(out) :: output_daily_cohorts_year
@@ -514,14 +513,14 @@ contains
     myinterface%params_siml%update_annualLAImax   = update_annualLAImax      
     myinterface%params_siml%do_closedN_run        = do_closedN_run       
     
-    ! this needs to be consistent with translation to code in run_biomee_f_bysite.R
+    ! this needs to be consistent with translation to code in run_lm3ppa_f_bysite.R
     if (code_method_photosynth == 1) then
       myinterface%params_siml%method_photosynth = "gs_leuning"
     else if (code_method_photosynth == 2) then
       myinterface%params_siml%method_photosynth = "pmodel"
     end if
 
-    ! this needs to be consistent with translation to code in run_biomee_f_bysite.R
+    ! this needs to be consistent with translation to code in run_lm3ppa_f_bysite.R
     if (code_method_mortality == 1) then
       myinterface%params_siml%method_mortality = "cstarvation"
     else if (code_method_mortality == 2) then
@@ -647,6 +646,7 @@ contains
     allocate(myinterface%pco2(ntstepsyear))
     allocate(out_biosphere%hourly_tile(ntstepsyear))
 
+
     yearloop: do yr=1, myinterface%params_siml%runyears
       !----------------------------------------------------------------
       ! Define simulations "steering" variables (forcingyear, etc.)
@@ -654,7 +654,7 @@ contains
       myinterface%steering = getsteering( yr, myinterface%params_siml )
 
       !----------------------------------------------------------------
-      ! Get external (environmental) forcing (for biomee, co2 is in myinterface%climate)
+      ! Get external (environmental) forcing (for lm3ppa, co2 is in myinterface%climate)
       !----------------------------------------------------------------
       ! Get climate variables for this year (full fields and 365 daily values for each variable)
       myinterface%climate(:) = getclimate( &
@@ -735,10 +735,16 @@ contains
       !----------------------------------------------------------------
       ! Output output_annual_cohorts (without subroutine)
       !----------------------------------------------------------------
-      if (.not. myinterface%steering%spinup) then  ! To get outputs only after spinupyears
 
-        idx =  yr - myinterface%params_siml%spinupyears
-        ! idx =  yr
+      ! To get outputs only after spinupyears make if below and also in run_lm3ppa_f_bysite.R make n_annual_cohorts = as.integer(params_siml$nyeartrend)
+
+       if (.not. myinterface%steering%spinup) then 
+
+         idx =  yr - myinterface%params_siml%spinupyears
+
+      ! To get outputs for all runyears idx=yr and also in run_lm3ppa_f_bysite.R make n_annual_cohorts = as.integer(runyears)
+
+        !idx =  yr
 
         output_annual_cohorts_year(idx, :)       = dble(out_biosphere%annual_cohorts(:)%year) !xxx commented out for calibration!
         output_annual_cohorts_cID(idx, :)        = dble(out_biosphere%annual_cohorts(:)%cID)
@@ -770,7 +776,7 @@ contains
         output_annual_cohorts_c_deadtrees(idx, :) = dble(out_biosphere%annual_cohorts(:)%c_deadtrees)
         output_annual_cohorts_deathrate(idx, :)  = dble(out_biosphere%annual_cohorts(:)%deathrate)
 
-      end if
+       end if
 
     end do yearloop
 
@@ -778,7 +784,7 @@ contains
     deallocate(myinterface%pco2)
     deallocate(out_biosphere%hourly_tile)
  
-  end subroutine biomee_f
+  end subroutine lm3ppa_f
 
   !////////////////////////////////////////////////////////////////
   ! Populates hourly tile-level output array passed back to C and R.
@@ -786,7 +792,7 @@ contains
   subroutine populate_outarray_hourly_tile( hourly_tile, out_hourly_tile ) !, idx_daily_start, idx_daily_end
 
     use, intrinsic :: iso_fortran_env, dp=>real64, sp=>real32, in=>int32
-    use md_interface_biomee, only: outtype_hourly_tile
+    use md_interface_lm3ppa, only: outtype_hourly_tile
     use md_params_core
 
     ! arguments
@@ -818,7 +824,7 @@ contains
   subroutine populate_outarray_daily_tile( daily_tile, out_daily_tile ) !, idx_daily_start, idx_daily_end
 
     use, intrinsic :: iso_fortran_env, dp=>real64, sp=>real32, in=>int32
-    use md_interface_biomee, only: outtype_daily_tile
+    use md_interface_lm3ppa, only: outtype_daily_tile
     use md_params_core
 
     ! arguments
@@ -870,7 +876,7 @@ contains
   subroutine populate_outarray_annual_tile( annual_tile, out_annual_tile )
 
     use, intrinsic :: iso_fortran_env, dp=>real64, sp=>real32, in=>int32
-    use md_interface_biomee, only: outtype_annual_tile
+    use md_interface_lm3ppa, only: outtype_annual_tile
     use md_params_core
 
     ! arguments

@@ -10,16 +10,16 @@
 // P-model
 /////////////////////////////////////////////////////////////
 void F77_NAME(pmodel_f)(
-    int    *spinup, // LOGICAL can be defined as _Bool but it gives a warming  
+    int    *spinup,          // LOGICAL can be defined as _Bool but it gives a warming  
     int    *spinupyears,
     int    *recycle,
     int    *firstyeartrend,
     int    *nyeartrend,
     int    *secs_per_tstep,
-    int    *soilmstress,
-    int    *tempstress,
-    int    *in_ppfd,
-    int    *in_netrad,
+    _Bool  *soilmstress,
+    _Bool  *tempstress,
+    _Bool  *in_ppfd,
+    _Bool  *in_netrad,
     int    *outdt,
     int    *ltre,
     int    *ltne,
@@ -73,8 +73,7 @@ extern SEXP pmodel_f_C(
     const int nt = INTEGER(n)[0] ;
 
     // Specify output
-    // 2nd agument to allocMatrix is number of rows, 3rd is number of columns
-    SEXP output = PROTECT( allocMatrix(REALSXP, nt, 15) );
+    SEXP output = PROTECT( allocMatrix(REALSXP, nt, 13) );   // 2nd agument to allocMatrix is number of rows, 3rd is number of columns
 
     // Fortran subroutine call
     F77_CALL(pmodel_f)(
@@ -117,10 +116,10 @@ extern SEXP pmodel_f_C(
 }
 
 /////////////////////////////////////////////////////////////
-// biomee
+// LM3PPA
 /////////////////////////////////////////////////////////////
-void F77_NAME(biomee_f)(
-    int    *spinup, // LOGICAL can be defined as _Bool but it gives a warming
+void F77_NAME(lm3ppa_f)(
+    int    *spinup,          // LOGICAL can be defined as _Bool but it gives a warming             
     int    *spinupyears,               
     int    *recycle,              
     int    *firstyeartrend,                  
@@ -227,8 +226,8 @@ void F77_NAME(biomee_f)(
     double *output_annual_cohorts_deathrate
     );
 
-// C wrapper function for biomee
-extern SEXP biomee_f_C(
+// C wrapper function for LM3PPA
+extern SEXP lm3ppa_f_C(
     SEXP spinup,                
     SEXP spinupyears,               
     SEXP recycle,                 
@@ -345,7 +344,7 @@ extern SEXP biomee_f_C(
     SEXP output_annual_cohorts_deathrate  = PROTECT( allocMatrix(REALSXP, nt_annual_cohorts, 50) );
     
     // Fortran subroutine call
-    F77_CALL(biomee_f)(
+    F77_CALL(lm3ppa_f)(
         LOGICAL(spinup),                
         INTEGER(spinupyears),                  
         INTEGER(recycle),                 
@@ -456,16 +455,16 @@ extern SEXP biomee_f_C(
     // // Output as list
     SEXP out_list = PROTECT( allocVector(VECSXP, 59) );  // maybe try  STRSXP instead of VECSXP
     
-    SET_VECTOR_ELT(out_list, 0,  output_hourly_tile);
-    SET_VECTOR_ELT(out_list, 1,  output_daily_tile);
-    SET_VECTOR_ELT(out_list, 2,  output_daily_cohorts_year ); 
-    SET_VECTOR_ELT(out_list, 3,  output_daily_cohorts_doy );  
-    SET_VECTOR_ELT(out_list, 4,  output_daily_cohorts_hour );  
-    SET_VECTOR_ELT(out_list, 5,  output_daily_cohorts_cID );  
-    SET_VECTOR_ELT(out_list, 6,  output_daily_cohorts_PFT );  
-    SET_VECTOR_ELT(out_list, 7,  output_daily_cohorts_layer );  
-    SET_VECTOR_ELT(out_list, 8,  output_daily_cohorts_density );  
-    SET_VECTOR_ELT(out_list, 9,  output_daily_cohorts_f_layer );  
+    SET_VECTOR_ELT(out_list, 0, output_hourly_tile);
+    SET_VECTOR_ELT(out_list, 1, output_daily_tile);
+    SET_VECTOR_ELT(out_list, 2, output_daily_cohorts_year ); 
+    SET_VECTOR_ELT(out_list, 3, output_daily_cohorts_doy );  
+    SET_VECTOR_ELT(out_list, 4, output_daily_cohorts_hour );  
+    SET_VECTOR_ELT(out_list, 5, output_daily_cohorts_cID );  
+    SET_VECTOR_ELT(out_list, 6, output_daily_cohorts_PFT );  
+    SET_VECTOR_ELT(out_list, 7, output_daily_cohorts_layer );  
+    SET_VECTOR_ELT(out_list, 8, output_daily_cohorts_density );  
+    SET_VECTOR_ELT(out_list, 9, output_daily_cohorts_f_layer );  
     SET_VECTOR_ELT(out_list, 10, output_daily_cohorts_LAI );  
     SET_VECTOR_ELT(out_list, 11, output_daily_cohorts_gpp );  
     SET_VECTOR_ELT(out_list, 12, output_daily_cohorts_resp );  
@@ -485,9 +484,7 @@ extern SEXP biomee_f_C(
     SET_VECTOR_ELT(out_list, 26, output_daily_cohorts_rootN );  
     SET_VECTOR_ELT(out_list, 27, output_daily_cohorts_SW_N );  
     SET_VECTOR_ELT(out_list, 28, output_daily_cohorts_HW_N );  
-
     SET_VECTOR_ELT(out_list, 29, output_annual_tile);
-
     SET_VECTOR_ELT(out_list, 30, output_annual_cohorts_year);
     SET_VECTOR_ELT(out_list, 31, output_annual_cohorts_cID);
     SET_VECTOR_ELT(out_list, 32, output_annual_cohorts_PFT);
@@ -528,7 +525,7 @@ extern SEXP biomee_f_C(
 /////////////////////////////////////////////////////////////
 static const R_CallMethodDef CallEntries[] = {
   {"pmodel_f_C",   (DL_FUNC) &pmodel_f_C,   26},  // Specify number of arguments to C wrapper as the last number here
-  {"biomee_f_C",   (DL_FUNC) &biomee_f_C,   46},  // Number of the SEXP variables (not the output)
+  {"lm3ppa_f_C",   (DL_FUNC) &lm3ppa_f_C,   46},  // Number of the SEXP variables (not the output)
   {NULL,         NULL,                0}
 };
 
@@ -538,5 +535,5 @@ void R_init_rsofun(DllInfo *dll)
     R_useDynamicSymbols(dll, FALSE);
 
     R_RegisterCCallable("rsofun", "pmodel_f_C",  (DL_FUNC) &pmodel_f_C);
-    R_RegisterCCallable("rsofun", "biomee_f_C",  (DL_FUNC) &biomee_f_C);
+    R_RegisterCCallable("rsofun", "lm3ppa_f_C",  (DL_FUNC) &lm3ppa_f_C);
 }

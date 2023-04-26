@@ -79,13 +79,14 @@ contains
     ! Test if forcing dimensions are correct
     shape_forcing = shape(forcing)
     if (idx_end>shape_forcing(1)) then
-      ! stop 'forcing array size does not have enough rows.'
+      stop 'forcing array size does not have enough rows.'
     end if
 
     ! warning: column indices in forcing array are hard coded
     out_climate(:)%dtemp   = real(forcing(idx_start:idx_end, 1))
     out_climate(:)%dprec   = real(forcing(idx_start:idx_end, 2))
     out_climate(:)%dvpd    = real(forcing(idx_start:idx_end, 3))
+    out_climate(:)%dpatm   = real(forcing(idx_start:idx_end, 11))
 
     if (in_ppfd) then
       out_climate(:)%dppfd = real(forcing(idx_start:idx_end, 4))
@@ -103,7 +104,9 @@ contains
       out_climate(:)%dfsun = real(forcing(idx_start:idx_end, 6))
     end if
     out_climate(:)%dsnow   = real(forcing(idx_start:idx_end, 7))
-    out_climate(:)%dpatm   = real(forcing(idx_start:idx_end, 11))
+
+    out_climate(:)%dpatm   = calc_patm( elv )    ! todo: use daily varying patm read from forcing
+
     out_climate(:)%dtmin   = real(forcing(idx_start:idx_end, 12))
     out_climate(:)%dtmax   = real(forcing(idx_start:idx_end, 13))
 
@@ -216,8 +219,9 @@ contains
       fpc_grid_field(pft) = 1.0
     end if
 
-    ! if (pft==0) stop 'get_fpc_grid: no PFT activated accoring to simulation parameter file.'
-    ! if (pft/=npft) stop 'GET_FPC_GRID: Adjust npft manually in params_core.mod.f90'
+    if (pft==0) stop 'get_fpc_grid: no PFT activated accoring to simulation parameter file.'
+
+    if (pft/=npft) stop 'GET_FPC_GRID: Adjust npft manually in params_core.mod.f90'
     
   end function get_fpc_grid
 

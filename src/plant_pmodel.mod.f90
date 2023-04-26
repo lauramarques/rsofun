@@ -180,6 +180,8 @@ contains
     ! Copyright (C) 2015, see LICENSE, Benjamin David Stocker
     ! contact: b.stocker@imperial.ac.uk
     !----------------------------------------------------------------    
+    use md_sofunutils, only: getparreal
+
     ! local variables
     integer :: pft
     integer :: npft_site
@@ -226,7 +228,7 @@ contains
     end if
 
     npft_site = pft
-    ! if (npft_site==0) stop 'PLANT:GETPAR_MODL_PLANT: PFT name not valid. See run/<simulationname>.sofun.parameter'
+    if (npft_site==0) stop 'PLANT:GETPAR_MODL_PLANT: PFT name not valid. See run/<simulationname>.sofun.parameter'
 
   end subroutine getpar_modl_plant
 
@@ -235,6 +237,8 @@ contains
     !----------------------------------------------------------------
     ! Read PFT parameters from respective file, given the PFT name
     !----------------------------------------------------------------
+    use md_sofunutils, only: getparreal
+
     ! arguments
     character(len=*), intent(in) :: pftname
 

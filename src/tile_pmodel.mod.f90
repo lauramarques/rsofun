@@ -32,7 +32,7 @@ module md_tile_pmodel
     real :: fgravel
     real :: fc
     real :: pwp
-    real :: whc_dz      ! water holding capacity per unit soil depth
+    real :: whc_dz
     real :: whc
     real :: ksat
     real :: thdiff_wp
@@ -312,7 +312,6 @@ contains
 
     ! do idx = 1, nlayers_soil
 
-      ! TOP LAYER
       fsand   = myinterface%soiltexture(1,1)
       fclay   = myinterface%soiltexture(2,1)
       forg    = myinterface%soiltexture(3,1)
@@ -406,7 +405,7 @@ contains
       ! VG_m = 1-(VG_n)  
       
       ! water holding capacity
-      whc_dz = (fc - pwp) * (1.0 - fgravel)
+      whc_dz = (fc-pwp)*(1-fgravel)
 
       ! add to soil paramters type
       params%fsand        = fsand
@@ -417,10 +416,10 @@ contains
       params%pwp          = pwp
       params%whc_dz       = whc_dz
       params%ksat         = ksat
-      params%thdiff_wp    = 0.2 ! value chosen from LPX (most soil codes have 0.2)
+      params%thdiff_wp    = 0.2    ! value chosen from LPX (most soil codes have 0.2)
       params%thdiff_whc15 = 0.6 ! value chosen from LPX (most soil codes have 0.2)
       params%thdiff_fc    = 0.4
-      
+
       ! overwrite
       params%whc = myinterface%whc_prescr
 
