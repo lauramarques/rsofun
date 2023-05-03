@@ -1570,7 +1570,7 @@ contains
     slow_N_free = MAX(0.0, slow_L_loss*(1./CNslow - CUEslow/CNm))
 
     ! Mineral nitrogen loss
-    ! To turn N losses off, set K_nitrogen and etaN to 0!
+    ! To turn off N losses, set K_nitrogen and etaN to 0!
     N_loss = vegn%mineralN * MIN(0.25, (A * K_nitrogen * myinterface%dt_fast_yr + etaN*runoff))
     vegn%Nloss_yr = vegn%Nloss_yr + N_loss + DON_loss
 

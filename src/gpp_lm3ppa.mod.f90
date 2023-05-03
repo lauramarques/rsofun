@@ -151,7 +151,7 @@ contains
             psyn, resp, w_scale2, transp )
 
           !===============================
-          ! XXX Experiment: increasing net photosynthesis (psyn) 15% and 30%
+          ! XXX Experiment: increasing net photosynthesis (psyn) and respiration (resp) 15% and 30%
           !===============================
            !if (myinterface%steering%year>myinterface%params_siml%spinupyears) then
            !  psyn = psyn * 1.30
