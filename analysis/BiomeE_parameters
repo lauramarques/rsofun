@@ -1,0 +1,100 @@
+
+## Drivers #### 
+
+params_tile <- tibble(
+  soiltype                    # Sand = 1, LoamySand = 2, SandyLoam = 3, SiltLoam = 4, FrittedClay = 5, Loam = 6, Clay = 7
+  FLDCAP                      # soil property: field capacity 
+  WILTPT                      # soil property: wilting point
+  K1                          # turnover rate of fast SOM per year
+  K2                          # turnover rate of slow SOM per year
+  K_nitrogen                  # mineral Nitrogen turnover rate
+  MLmixRatio                  # the ratio of C and N returned to litters from microbes
+  etaN                        # loss rate with runoff
+  LMAmin                      # minimum LMA, boundary condition
+  fsc_fine                    # fraction of fast turnover carbon in fine biomass
+  fsc_wood                    # fraction of fast turnover carbon in wood biomass
+  GR_factor                   # growth respiration factor
+  l_fract                     # fraction of the carbon retained after leaf drop
+  retransN                    # retranslocation coefficient of Nitrogen
+  f_initialBSW 
+  f_N_add                     # re-fill of N for sapwood
+  # add calibratable params
+  tf_base                     # calibratable scalar for respiration
+  par_mort                    # calibratable parameter for canopy mortality - param_dbh=1 param_csv=1 param_gr=1 CAI_MAX=2
+  par_mort_under              # calibratable parameter for mortality understory module
+)
+
+params_species <- tibble(
+  # species                   0 1 2 3 4    ...
+  lifeform                    # 0 for grasses; 1 for trees
+  phenotype                   # 0 for Deciduous; 1 for Evergreen
+  pt                          # 0 for C3; 1 for C4
+  # Root parameters
+  alpha_FR                    # fine root turnover rate yr-1
+  rho_FR                      # material density of fine roots (kgC m-3)
+  root_r                      # radius of the fine roots, m
+  root_zeta                   # e-folding parameter of root vertical distribution (m)
+  Kw_root                     # fine root water donductivity mol m m-2 s−1 MPa−1
+  leaf_size                   # characteristic leaf size
+  # Photosynthesis parameters
+  Vmax                        # max rubisco rate, mol m-2 s-1
+  Vannual                     # annual productivity per unit area at full fun (kgC m-2 yr-1)
+  wet_leaf_dreg               # wet leaf photosynthesis down-regulation: wet leaf is 30% less than dry leaf
+  m_cond                      # factor of stomatal conductance
+  alpha_phot                  # photosynthesis efficiency
+  gamma_L                     # leaf respiration coeficient (per yr)
+  gamma_LN                    # leaf respiration coeficient per unit N
+  gamma_SW                    # sapwood respiration rate, kgC m-2 Acambium yr-1
+  gamma_FR                    # Fine root respiration rate, kgC kgC-1 yr-1
+  tc_crit                     # OFF degree C, converted to K in spdata
+  tc_crit_on                  # ON degree C, converted to K in spdata
+  gdd_crit                    # critical value of GDD5 for turning ON growth season
+  betaON                      # Critical soil moisture for PhenoON
+  betaOFF                     # Critical soil moisture for PhenoOFF
+  seedlingsize                # initial size of seedlings kgC/indiv
+  LNbase                      # basal leaf Nitrogen per unit area, kg N/m2, (Rubisco) Vmax = 0.03125*LNbase 
+  lAImax                      # maximum crown LAI 
+  Nfixrate0                   # Reference N fixation rate (kgN kgC-1 root)
+  NfixCost0                   # arbon cost of N fixation (kgC kgN-1)
+  phiCSA                      # ratio of sapwood area to leaf area
+  mortrate_d_c                # canopy tree mortality rate, year-1 
+  mortrate_d_u                # understory tree mortality rate, year-1
+  maturalage                  # the age that can reproduce
+  v_seed                      # fracton of G_SF to G_F ! seed allocation
+  fNSNmax                     # multiplier for NSNmax as sum of potential bl and br
+  LMA                         # leaf mass per unit area kg C/m2
+  rho_wood                    # woody density, kg C m-3 wood
+  alphaBM                     # Allometry: biomass = alphaBM * DBH ** thetaBM        
+  thetaBM                     # Allometry: biomass = alphaBM * DBH ** thetaBM     
+  # add calibratable params
+  kphio                       # quantum yield efficiency calibratable
+  phiRL                       # ratio of fine root to leaf area calibratable
+  LAI_light                   # light controlled maximum LAI calibratable
+) 
+
+params_soil <- tibble(
+  type              
+  GMD                    # geometric mean partice diameter, mm
+  GSD                    # geometric standard deviation of particle size
+  vwc_sat           
+  chb                    # Soil texture parameter
+  psi_sat_ref            # saturation soil water potential, m
+  k_sat_ref              # hydraulic conductivity of saturated soil, kg/(m2 s)   
+  alphaSoil              # vertical changes of soil property, 1: no change
+  heat_capacity_dry 
+)
+
+init_cohort <- tibble(
+  init_cohort_species    # indicates different species. The number taken is = init_n_cohorts defined in the model!
+  init_cohort_nindivs    # initial individual density, individual/m2 (1 indiv/m2 = 10.000 indiv/ha)
+  init_cohort_bsw        # initial biomass of sapwood, kg C/individual
+  init_cohort_bHW        # initial biomass of heartwood, kg C/tree
+  init_cohort_nsc        # initial non-structural biomass
+)
+
+init_soil <- tibble(
+  init_fast_soil_C       # initial fast soil C, kg C/m2
+  init_slow_soil_C       # initial slow soil C, kg C/m2
+  init_Nmineral          # Mineral nitrogen pool, (kg N/m2)
+  N_input                # annual N input to soil N pool, kgN m-2 yr-1
+)
