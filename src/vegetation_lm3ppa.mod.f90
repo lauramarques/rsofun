@@ -879,6 +879,7 @@ contains
         ! cc%c_deadtrees   = deadtrees * (cc%nsc + cc%seedC + cc%bl + cc%br + cc%bsw + cc%bHW) 
 
         ! print*, "cc%nindivs", cc%nindivs
+        ! print*, "deathrate", deathrate
        
         end associate
       enddo
@@ -981,7 +982,7 @@ contains
     ! vegn%n_deadtrees   = vegn%n_deadtrees + cc%n_deadtrees
     ! vegn%c_deadtrees   = vegn%c_deadtrees + cc%c_deadtrees
     
-    ! ! print*, "vegn%n_deadtrees", vegn%n_deadtrees
+    ! print*, "vegn%n_deadtrees", vegn%n_deadtrees
     ! print*, "deadtrees", deadtrees
     ! print*, "cc%n_deadtrees", cc%n_deadtrees
     ! print*, "vegn%n_deadtrees", vegn%n_deadtrees
@@ -1570,7 +1571,7 @@ contains
     slow_N_free = MAX(0.0, slow_L_loss*(1./CNslow - CUEslow/CNm))
 
     ! Mineral nitrogen loss
-    ! To turn off N losses, set K_nitrogen and etaN to 0!
+    ! To turn off N losses, set K_nitrogen and etaN to 0
     N_loss = vegn%mineralN * MIN(0.25, (A * K_nitrogen * myinterface%dt_fast_yr + etaN*runoff))
     vegn%Nloss_yr = vegn%Nloss_yr + N_loss + DON_loss
 
@@ -2021,7 +2022,7 @@ contains
         ! Turn ON N limitation (dependeing on parameters) ...or...
         spdata(i)%LAImax = MAX(LAImin, MIN(LAI_nitrogen, sp%LAI_light))
         ! ...or ... turn OFF N limitation
-        ! spdata(i)%LAImax = MAX(LAImin, sp%LAI_light)
+        !spdata(i)%LAImax = MAX(LAImin, sp%LAI_light)
 
         spdata(i)%underLAImax = MIN(sp%LAImax, 1.2)
 
