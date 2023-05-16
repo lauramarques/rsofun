@@ -2,7 +2,7 @@
 % Please edit documentation in R/init_dates_dataframe.R
 \name{init_dates_dataframe}
 \alias{init_dates_dataframe}
-\title{Initialises a tibble with dates}
+\title{Initialises a data frame with dates}
 \usage{
 init_dates_dataframe(
   yrstart,
@@ -16,40 +16,31 @@ init_dates_dataframe(
 )
 }
 \arguments{
-\item{yrstart}{An integer defining the start year
-of dates covered by the dataframe.}
+\item{yrstart}{An integer defining the start year of dates covered by the dataframe}
 
-\item{yrend}{An integer defining the end year of dates
-covered by the dataframe.}
+\item{yrend}{An integer defining the end year of dates covered by the dataframe}
 
-\item{startmoy}{An integer defining the start month-of-year of dates
-covered by the dataframe. Defaults to 1.}
+\item{startmoy}{An integer defining the start month of dates covered by the dataframe. Defaults to 1.}
 
-\item{startdoy}{An integer defining the start day-of-year of
-dates covered by the dataframe. Defaults to 1.}
+\item{startdoy}{An integer defining the start day-of-year of dates covered by the dataframe. Defaults to 1.}
 
-\item{freq}{A character string specifying the time steps of dates
-(in rows). Defaults to \code{"days"}. Any of \code{"days", "months"}.}
+\item{freq}{A character string specifying the time steps of dates (in rows). Defaults to \code{"days"}. Any of \code{"days", "months"}.}
 
-\item{endmoy}{An integer defining the end month-of-year of dates covered
-by the dataframe. Defaults to 12.}
+\item{endmoy}{An integer defining the end month of dates covered by the dataframe. Defaults to 12.}
 
-\item{enddom}{An integer defining the end day-of-year of dates
-covered by the dataframe. Defaults to 31.}
+\item{enddom}{An integer defining the end day-of-year of dates covered by the dataframe. Defaults to 31.}
 
 \item{noleap}{Whether leap years are ignored. Defaults to \code{FALSE}.}
 }
 \value{
-A tibble with dates.
+A data frame (tibble) with dates.
 }
 \description{
-Creates a tibble with rows for each date (\code{\link[lubridate:ymd]{lubridate::ymd}} object from 
-library \code{lubridate}) from \code{'yrstart'} to \code{'yrend'}. Intervals of dates is 
-specified by argument \code{'freq'}.
+Creates a dataframe (tibble) with rows for each date (ymd object from 
+library lubridate) from 'yrstart' to 'yrend'. Intervals of dates is 
+specified by argument 'freq'.
 }
 \examples{
-\dontrun{
- ddf <- init_dates_dataframe( 2000, 2003, startmoy=1, startdoy=1,
-  freq="days", endmoy=12, enddom=31, noleap=FALSE )
-}
+ddf <- init_dates_dataframe( 2000, 2003, startmoy=1, startdoy=1, freq="days", endmoy=12, enddom=31, noleap=FALSE )
+
 }

@@ -2,122 +2,36 @@
 % Please edit documentation in R/run_pmodel_f_bysite.R
 \name{run_pmodel_f_bysite}
 \alias{run_pmodel_f_bysite}
-\title{R wrapper for SOFUN P-model}
+\title{R wrapper for SOFUN}
 \usage{
 run_pmodel_f_bysite(
   sitename,
   params_siml,
-  site_info,
+  siteinfo,
   forcing,
-  params_soil,
+  df_soiltexture,
   params_modl,
-  makecheck = TRUE,
-  verbose = TRUE
+  makecheck = TRUE
 )
 }
 \arguments{
-\item{sitename}{Site name.}
+\item{sitename}{Site name}
 
-\item{params_siml}{Simulation parameters.
-\describe{
-      \item{spinup}{A logical value indicating whether this simulation does spin-up.}
-      \item{spinupyears}{Number of spin-up years.}
-      \item{recycle}{Length of standard recycling period, in days.}
-      \item{soilmstress}{A logical value, if \code{TRUE} an empirical soil 
-      moisture stress function is applied to GPP.}
-      \item{tempstress}{A logical value, if \code{TRUE} an empirical temperature 
-      stress function is applied to GPP.}
-      \item{calc_aet_fapar_vpd}{(not in use)}
-      \item{in_ppfd}{A logical value, if \code{TRUE} PPFD is a prescribed variable, 
-      if \code{FALSE} PPFD is simulated internally.}
-      \item{in_netrad}{A logical value indicating whether net radiation is 
-      prescribed (\code{TRUE}) or simulated internally (\code{FALSE}).}
-      \item{outdt}{An integer indicating the output periodicity.}
-      \item{ltre}{A logical value, \code{TRUE} if evergreen tree.}
-      \item{ltne}{A logical value, \code{TRUE} if evergreen tree and N-fixing.}
-      \item{ltrd}{A logical value, \code{TRUE} if deciduous tree.}
-      \item{ltnd}{A logical value, \code{TRUE} if deciduous tree and N-fixing.}
-      \item{lgr3}{A logical value, \code{TRUE} if grass with C3 photosynthetic pathway.}
-      \item{lgn3}{A logical value, \code{TRUE} if grass with C3 photosynthetic
-      pathway and N-fixing.}
-      \item{lgr4}{A logical value, \code{TRUE} if grass with C4 photosynthetic pathway.}
-      \item{firstyeartrend}{The year AD of first transient year.}
-      \item{nyeartrend}{The number of transient years.}
-}}
+\item{params_siml}{Simulation parameters}
 
-\item{site_info}{A list of site meta info. Required:
-\describe{
-      \item{lon}{Longitud of the site location.}
-      \item{lat}{Latitude of the site location.}
-      \item{elv}{Elevation of the site location, in meters.}
-      \item{whc}{A numeric value for the water holding capacity (in mm), used for 
-      simulating the soil water balance.}
-}}
+\item{siteinfo}{Site meta info}
 
-\item{forcing}{A data frame of forcing climate data, used as input 
-(returned object by \code{\link{collect_drivers_sofun}}, see \code{\link{p_model_drivers}}
-for a detailed description of its structure and contents).}
+\item{forcing}{forcing (input) dataframe (returned object by \link{prepare_input_sofun})}
 
-\item{params_soil}{A list of soil texture parameters, for the top and bottom
-layer of soil.
-\describe{
-      \item{fsand}{The fraction of sand in the soil.}
-      \item{fclay}{The fraction of clay in the soil.}
-      \item{forg}{The fraction of organic matter in the soil.}
-      \item{fgravel}{The fraction of gravel in the soil.}
-}}
+\item{df_soiltexture}{A list of soil texture parameters}
 
-\item{params_modl}{A named list of free (calibratable) model parameters.
-\describe{
-  \item{kphio}{The quantum yield efficiency parameter, in mol mol\eqn{^{-1}}.}
-  \item{soilm_par_a}{Intercept of the linear soil moisture stress function (unitless).}
-  \item{soilm_par_b}{Slope of the linear soil moisture stress function (unitless).}
-  \item{tau_acclim_tempstress}{Memory e-folding time scale parameter (in hours)
-  for acclimation of photosynthesis, following Eq. 5 in Makela et al. (2004) 
-  Tree Physiology 24, 369–376}
-  \item{par_shape_tempstress}{Shape parameter for the low temperature stress
-  function affecting quantum yield efficiency. A positive (unitless) value indicating 
-  the sensitivity of the decline (assuming no decline at 10\eqn{^o}C) and 
-  above, but decreasing with a quadratic function below 10\eqn{^o}C).}
-}}
+\item{params_modl}{Model parameters}
 
-\item{makecheck}{A logical specifying whether checks are performed 
-to verify forcings and model parameters. \code{TRUE} by default.}
-
-\item{verbose}{A logical specifying whether to print warnings.
-Defaults to \code{TRUE}.}
-}
-\value{
-Model output is provided as a tidy dataframe, with columns:
-\describe{
-  \item{\code{date}}{Date of the observation in YYYY-MM-DD format.}
-  \item{\code{year_dec}}{Decimal representation of year and day of the year
-     (for example, 2007.000 corresponds to 2007-01-01 and 2007.003 to 2007-01-02.}
-  \item{\code{fapar}}{Fraction of photosynthetic active radiation (fAPAR), taking
-     values between 0 and 1.}
-  \item{\code{gpp}}{Gross Primary Productivity (GPP) for each time stamp 
-      (in gC m\eqn{^{-2}} d\eqn{^{-1}}).}
-  \item{\code{transp}}{Actual evapotranspiration (AET) (in mm d\eqn{^{-1}}).}
-  \item{\code{latenth}}{Latent heat flux (in J m\eqn{^{-2}} d\eqn{^{-1}}).}
-  \item{\code{pet}}{Potential evapotranspiration (PET) (in mm d\eqn{^{-1}}).}
-  \item{\code{vcmax}}{Maximum rate of RuBisCO carboxylation 
-      (Vcmax) (in mol C m\eqn{^{-2}} d\eqn{^{-1}}).}
-  \item{\code{jmax}}{Maximum rate of electron transport for RuBP regeneration
-      (in mol CO\eqn{_2} m\eqn{^{-2}} s\eqn{^{-1}}).}
-  \item{\code{vcmax25}}{Maximum rate of carboxylation (Vcmax), 
-      normalised to 25\eqn{^o}C (in mol C m\eqn{^{-2}} d\eqn{^{-1}}).}
-  \item{\code{jmax25}}{Maximum rate of electron transport, normalised to 
-      25\eqn{^o}C (in mol C m\eqn{^{-2}} s\eqn{^{-1}}).}
-  \item{\code{gs_accl}}{Acclimated stomatal conductance (in 
-      mol C m\eqn{^{−2}} d\eqn{^{−1}} Pa\eqn{^{−1}}).}
-  \item{\code{wscal}}{Relative soil water content, between 0 (permanent wilting 
-      point, PWP) and 1 (field capacity, FC).}
-  \item{\code{chi}}{Ratio of leaf-internal to ambient CO\eqn{_{2}}, ci:ca (unitless).}
-  \item{\code{iwue}}{Intrinsic water use efficiency (iWUE) (in Pa).}
-  \item{\code{rd}}{Dark respiration (Rd) in gC m\eqn{^{-2}} d\eqn{^{-1}}.}
-  \item{\code{tsoil}}{Soil temperature, in \eqn{^{o}}C.}
-  }
+\item{makecheck}{A logical specifying whether checks are performed to verify forcings.}
 }
 \description{
-Call to the Fortran P-model
+R wrapper for SOFUN
+}
+\details{
+This is the model
 }

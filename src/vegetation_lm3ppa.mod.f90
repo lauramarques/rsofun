@@ -128,8 +128,11 @@ contains
     !endif
 
     ! Obligate Nitrogen Fixation
+    ! XXX turn of N fixation
     cc%fixedN = fnsc*spdata(sp)%NfixRate0 * cc%br * tf * myinterface%dt_fast_yr ! kgN tree-1 step-1
     r_Nfix    = spdata(sp)%NfixCost0 * cc%fixedN ! + 0.25*spdata(sp)%NfixCost0 * cc%N_uptake    ! tree-1 step-1
+
+    print*,'N fixation: ', fixedN
     
     ! LeafN    = spdata(sp)%LNA * cc%leafarea  ! gamma_SW is sapwood respiration rate (kgC m-2 Acambium yr-1)
     r_stem   = fnsc*spdata(sp)%gamma_SW  * Acambium * tf * myinterface%dt_fast_yr ! kgC tree-1 step-1
@@ -302,6 +305,9 @@ contains
         !     endif
         ! ENDIF
 
+
+        print*,'N limitation factor: ', cc%N_growth / N_demand
+
         ! Nitrogen available for all tisues, including wood
         if (cc%N_growth < N_demand) then
           ! a new method, Weng, 2019-05-21
@@ -309,6 +315,7 @@ contains
           Nsupplyratio = MAX(0.0, MIN(1.0, cc%N_growth/N_demand))
           !r_N_SD = (cc%N_growth-cc%C_growth/sp%CNsw0)/(N_demand-cc%C_growth/sp%CNsw0) ! fixed wood CN
           r_N_SD = cc%N_growth/N_demand ! = Nsupplyratio
+
           if (sp%lifeform > 0 ) then ! for trees
             if (r_N_SD<=1.0 .and. r_N_SD>0.0) then
               dBSW =  dBSW + (1.0-r_N_SD) * (dBL+dBR+dSeed)
@@ -334,7 +341,7 @@ contains
         cc%br     = cc%br    + dBR
         cc%bsw    = cc%bsw   + dBSW
         cc%seedC  = cc%seedC + dSeed
-        cc%NSC    = cc%NSC  - dBR - dBL -dSeed - dBSW
+        cc%NSC    = cc%NSC  - dBR - dBL - dSeed - dBSW
         cc%resg = 0.5 * (dBR+dBL+dSeed+dBSW) !  daily
 
         ! update nitrogen pools, Nitrogen allocation
@@ -343,6 +350,7 @@ contains
         cc%seedN = cc%seedN + dSeed /sp%CNseed0
         cc%sapwN = cc%sapwN + f_N_add * cc%NSN + &
           (cc%N_growth - dBL/sp%CNleaf0 - dBR/sp%CNroot0 - dSeed/sp%CNseed0)
+
         !extraN = max(0.0,cc%sapwN+cc%woodN - (cc%bsw+cc%bHW)/sp%CNsw0)
         extraN   = max(0.0,cc%sapwN - cc%bsw/sp%CNsw0)
         cc%sapwN = cc%sapwN - extraN

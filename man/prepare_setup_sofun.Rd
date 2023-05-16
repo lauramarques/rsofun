@@ -4,37 +4,20 @@
 \alias{prepare_setup_sofun}
 \title{Complements the setup settings}
 \usage{
-prepare_setup_sofun(site_info, params_siml)
+prepare_setup_sofun(siteinfo, params_siml)
 }
 \arguments{
-\item{site_info}{A character string specifying the path to the site meta 
-information file, or a data frame containing the site meta info. Required
-columns are:
-\describe{
-\item{\code{sitename}}{Name of the site, must be the first column of the file.}
-\item{\code{lon}}{Longitude of site.}
-\item{\code{lat}}{Latitude of site.}
-\item{\code{elv}}{Elevation of site, in m.}
-\item{\code{year_start, year_end}}{Years for which the simulation is to be done,
-corresponding to data availability from site.}
-}}
+\item{siteinfo}{A character string specifying the path to the site meta info file, or a dataframe containing the site meta info.}
 
-\item{params_siml}{A named list containing the simulation parameters
-for SOFUN.}
+\item{params_siml}{A named list containing the simulation parameters for SOFUN.}
 }
 \value{
-A data frame (tibble) containing the site meta information, 
-complemented by column \code{params_siml} which is a nested list 
-of complemented simulation parameters.
+A dataframe (tibble) containing the site meta info, complemented by column 'params_siml' which is a nested list of complemented simulation parameters.
 }
 \description{
-Complements the settings based on the site meta info CSV file or data frame.
+Complements the settings based on the site metainfo CSV file or data frame.
 }
 \examples{
-\dontrun{
- setup <- prepare_setup_sofun(
-   site_info = site_info,
-   params_siml = params_siml
-  )
-}
+setup <- prepare_setup_sofun(siteinfo = siteinfo, params_siml = params_siml)
+
 }
