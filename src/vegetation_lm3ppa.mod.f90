@@ -132,8 +132,6 @@ contains
     cc%fixedN = fnsc*spdata(sp)%NfixRate0 * cc%br * tf * myinterface%dt_fast_yr ! kgN tree-1 step-1
     r_Nfix    = spdata(sp)%NfixCost0 * cc%fixedN ! + 0.25*spdata(sp)%NfixCost0 * cc%N_uptake    ! tree-1 step-1
 
-    print*,'N fixation: ', fixedN
-    
     ! LeafN    = spdata(sp)%LNA * cc%leafarea  ! gamma_SW is sapwood respiration rate (kgC m-2 Acambium yr-1)
     r_stem   = fnsc*spdata(sp)%gamma_SW  * Acambium * tf * myinterface%dt_fast_yr ! kgC tree-1 step-1
     r_root   = fnsc*spdata(sp)%gamma_FR  * cc%rootN * tf * myinterface%dt_fast_yr ! root respiration ~ root N    
@@ -306,7 +304,7 @@ contains
         ! ENDIF
 
 
-        print*,'N limitation factor: ', cc%N_growth / N_demand
+        ! print*,'N limitation factor: ', cc%N_growth / N_demand
 
         ! Nitrogen available for all tisues, including wood
         if (cc%N_growth < N_demand) then
@@ -1433,8 +1431,8 @@ contains
     ! logical :: NSN_not_full
     integer :: i
 
-    ! xxx try
-    vegn%mineralN = 0.2
+    ! ! xxx Turn off N limitation by supplying large amounts of mineral soil N
+    ! vegn%mineralN = 0.2
 
     ! Nitrogen uptake parameter
     ! It considers competition here. How much N one can absorp depends on 
@@ -1472,9 +1470,11 @@ contains
           cc => vegn%cohorts(i)
           cc%N_uptake  = 0.0
           if (cc%NSN < cc%NSNmax) then
+            
             cc%N_uptake  = cc%br * avgNup ! min(cc%br*avgNup, cc%NSNmax-cc%NSN)
             cc%nsn       = cc%nsn + cc%N_uptake
             cc%annualNup = cc%annualNup + cc%N_uptake !/cc%crownarea
+
             ! subtract N from mineral N
             vegn%mineralN = vegn%mineralN - cc%N_uptake * cc%nindivs
             vegn%N_uptake = vegn%N_uptake + cc%N_uptake * cc%nindivs
@@ -1534,12 +1534,13 @@ contains
 
     ! Default CUE0 adopted from BiomeE-Allocation
     if (slow_L_loss > 0.0) then  
-      CUEfast = MIN(CUE0,CNm*(fast_L_loss/CNfast + NforM)/fast_L_loss)
+      CUEfast = MIN(CUE0, CNm * (fast_L_loss/CNfast + NforM)/fast_L_loss)
     else
       CUEfast = CUE0
     end if
+
     if (slow_L_loss > 0.0) then
-      CUEslow = MIN(CUE0,CNm*(slow_L_loss/CNslow + NforM)/slow_L_loss)
+      CUEslow = MIN(CUE0, CNm * (slow_L_loss/CNslow + NforM)/slow_L_loss)
     else
       CUEslow = CUE0
     end if
@@ -1553,7 +1554,7 @@ contains
     vegn%structuralL = vegn%structuralL - slow_L_loss
 
     fDON        = 0.25 ! 0.25 ! * myinterface%dt_fast_yr ! 0.05 !* myinterface%dt_fast_yr
-    runoff      = 0.2 ! 0.2 ! mm day-1
+    runoff      = 0.2  ! 0.2  ! mm day-1
     
     ! Assume it is proportional to decomposition rates
     ! Find some papers!!
@@ -1580,8 +1581,11 @@ contains
 
     ! Mineral nitrogen loss
     ! To turn off N losses, set K_nitrogen and etaN to 0
-    N_loss = vegn%mineralN * MIN(0.25, (A * K_nitrogen * myinterface%dt_fast_yr + etaN*runoff))
-    vegn%Nloss_yr = vegn%Nloss_yr + N_loss + DON_loss
+    ! N_loss = vegn%mineralN * MIN(0.25, (A * K_nitrogen * myinterface%dt_fast_yr + etaN*runoff))
+
+    N_loss = vegn%mineralN * MIN(0.25, (A * K_nitrogen * myinterface%dt_fast_yr))
+
+    vegn%Nloss_yr = vegn%Nloss_yr + N_loss ! + DON_loss
 
     vegn%mineralN = vegn%mineralN - N_loss     &
                     + vegn%N_input * myinterface%dt_fast_yr  &
@@ -2154,7 +2158,7 @@ contains
       call relayer_cohorts( vegn )
 
       ! Initial Soil pools and environmental conditions
-      vegn%metabolicL   = myinterface%init_soil%init_fast_soil_C ! kgC m-2
+      vegn%metabolicL   = myinterface%init_soil%init_fast_soil_C ! kg C m-2
       vegn%structuralL  = myinterface%init_soil%init_slow_soil_C ! slow soil carbon pool, (kg C/m2)
       vegn%metabolicN   = vegn%metabolicL/CN0metabolicL  ! fast soil nitrogen pool, (kg N/m2)
       vegn%structuralN  = vegn%structuralL/CN0structuralL  ! slow soil nitrogen pool, (kg N/m2)
