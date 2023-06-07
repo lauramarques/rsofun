@@ -1,4 +1,4 @@
-# This script saves the outputs from the model simulations
+# This script saves the outputs from the model simulations as netCDF files
 
 # load packages
 library(tidyverse)
@@ -187,6 +187,7 @@ nstem_size <- BiomeE_P0_BIA_aCO2_annual_cohorts %>%
 nstem_size_wid <- nstem_size %>% 
   pivot_wider(names_from = dbh_bins, values_from = nstem_size,values_fill = 0) %>% arrange(year) %>%
   select(-year) %>% mutate(`[90,100)`=0,`[100,150)`=0,`[150,200)`=0,`[200,250)`=0)
+tail(nstem_size_wid)
 # create the netCDF filename 
 ncfname <- paste("~/rsofun/data/outputs_mod/nc_files/412ppm/BIA/", 
                  "BiomeEP_nstem_size_P0_BIA_412ppm", ".nc", sep="")

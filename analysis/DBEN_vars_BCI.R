@@ -1,4 +1,4 @@
-# This script saves the outputs from the model simulations
+# This script saves the outputs from the model simulations as netCDF files
 
 # load packages
 library(tidyverse)

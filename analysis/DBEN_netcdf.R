@@ -30,6 +30,9 @@ var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/BIA/
 var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/FIN/BiomeEP_cwood_size_P0_FIN_412ppm.nc")
 var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/FIN/BiomeEP_cveg_P0_FIN_412ppm.nc")
 var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/FIN/BiomeEP_stemmort_pft_P0_FIN_412ppm.nc")
+var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/FIN/BiomeEP_WBgrowth_P0_FIN_412ppm.nc")
+var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/BCI/BiomeEP_WBgrowth_P0_BCI_412ppm.nc")
+var1_netcdf <- nc_open("/home/laura/rsofun/data/outputs_mod/nc_files/412ppm/BIA/BiomeEP_nstem_size_P0_BIA_412ppm.nc")
 var1_netcdf
 attributes(var1_netcdf$var)
 attributes(var1_netcdf$dim)
@@ -38,9 +41,9 @@ time <- ncvar_get(var1_netcdf, "time")
 sizeclass <- ncvar_get(var1_netcdf, "sizeclass")
 pft <- ncvar_get(var1_netcdf, "pft")
 # get variables
-dvar <- ncvar_get(var1_netcdf,"stemmort")
-dlname <- ncatt_get(var1_netcdf,"BAgrowth","long_name")
-dunits <- ncatt_get(var1_netcdf,"BAgrowth","units")
-fillvalue <- ncatt_get(var1_netcdf,"BAgrowth","_FillValue")
-
+dvar <- ncvar_get(var1_netcdf,"nstem_size")
+dlname <- ncatt_get(var1_netcdf,"nstem_size","long_name")
+dunits <- ncatt_get(var1_netcdf,"nstem_size","units")
+fillvalue <- ncatt_get(var1_netcdf,"nstem_size","_FillValue")
+tail(dvar)
 
