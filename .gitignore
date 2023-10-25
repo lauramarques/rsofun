@@ -16,3 +16,5 @@ vignettes/*.html
 # documentation dir
 docs/
 
+# other stuff
+repo_info
