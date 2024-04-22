@@ -21,7 +21,7 @@
         <a class="external-link hidden-md hidden-lg" href="https://geco-group.org/">
           <img src="https://raw.githubusercontent.com/computationales/GECO_template/main/geco_logo_white_small.png" id="hexlogo" alt="GECO"></a>
         <a class="navbar-brand" href="../index.html">
-           <i>rsofun <small>v4.3</small></i>
+           <i>rsofun <small>v4.4.1</small></i>
         </a>
       </div>
     </div>
@@ -37,10 +37,10 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/biomee_model_structure.html">BiomeE model structure</a>
+      <a href="../articles/biomee_use.html">BiomeE usage</a>
     </li>
     <li>
-      <a href="../articles/biomee_use.html">BiomeE usage</a>
+      <a href="../articles/data_format.html">P-model data format</a>
     </li>
     <li>
       <a href="../articles/new_cost_function.html">Parameter calibration and cost functions</a>
@@ -49,7 +49,7 @@
       <a href="../articles/pmodel_use.html">P-model usage</a>
     </li>
     <li>
-      <a href="../articles/prepare_forcing.html">Prepare forcing</a>
+      <a href="../articles/sensitivity_analysis.html">Sensitivity analysis and calibration interpretation</a>
     </li>
   </ul></li>
 <li>
@@ -102,33 +102,25 @@
         </td>
         <td><p>rsofun BiomeE GPP validation data</p></td>
       </tr><tr><td>
-          <p><code><a href="calc_net_assim.html">calc_net_assim()</a></code> </p>
-        </td>
-        <td><p>Calculate net assimilation</p></td>
-      </tr><tr><td>
           <p><code><a href="calib_sofun.html">calib_sofun()</a></code> </p>
         </td>
         <td><p>Calibrates SOFUN model parameters</p></td>
       </tr><tr><td>
-          <p><code><a href="collect_drivers_sofun.html">collect_drivers_sofun()</a></code> </p>
+          <p><code><a href="cost_likelihood_biomee.html">cost_likelihood_biomee()</a></code> </p>
         </td>
-        <td><p>Collect all drivers</p></td>
+        <td><p>Log-likelihood cost function for BiomeE with different targets</p></td>
       </tr><tr><td>
-          <p><code><a href="create_cost_likelihood_biomee.html">create_cost_likelihood_biomee()</a></code> </p>
+          <p><code><a href="cost_likelihood_pmodel.html">cost_likelihood_pmodel()</a></code> </p>
         </td>
-        <td><p>Creates a log-likelihood cost function for biomee with different targets</p></td>
+        <td><p>Cost function computing a log-likelihood for calibration of P-model parameters</p></td>
       </tr><tr><td>
-          <p><code><a href="create_cost_likelihood_pmodel.html">create_cost_likelihood_pmodel()</a></code> </p>
+          <p><code><a href="cost_rmse_biomee.html">cost_rmse_biomee()</a></code> </p>
         </td>
-        <td><p>Creates a log-likelihood cost function for several setups</p></td>
+        <td><p>RMSE cost function for BiomeE</p></td>
       </tr><tr><td>
-          <p><code><a href="create_cost_rmse_biomee.html">create_cost_rmse_biomee()</a></code> </p>
+          <p><code><a href="cost_rmse_pmodel.html">cost_rmse_pmodel()</a></code> </p>
         </td>
-        <td><p>Creates a cost function for different simulation setups based on RMSE</p></td>
-      </tr><tr><td>
-          <p><code><a href="create_cost_rmse_pmodel.html">create_cost_rmse_pmodel()</a></code> </p>
-        </td>
-        <td><p>Creates a cost function for different simulation setups based on RMSE</p></td>
+        <td><p>Cost function computing RMSE for calibration of P-model parameters</p></td>
       </tr><tr><td>
           <p><code><a href="init_dates_dataframe.html">init_dates_dataframe()</a></code> </p>
         </td>
@@ -136,15 +128,19 @@
       </tr><tr><td>
           <p><code><a href="p_model_drivers.html">p_model_drivers</a></code> </p>
         </td>
-        <td><p>SOFUN p-model driver data</p></td>
+        <td><p>rsofun P-model driver data</p></td>
+      </tr><tr><td>
+          <p><code><a href="p_model_drivers_vcmax25.html">p_model_drivers_vcmax25</a></code> </p>
+        </td>
+        <td><p>rsofun p-model driver data (for leaf traits)</p></td>
       </tr><tr><td>
           <p><code><a href="p_model_validation.html">p_model_validation</a></code> </p>
         </td>
         <td><p>SOFUN p-model GPP validation data</p></td>
       </tr><tr><td>
-          <p><code><a href="prepare_setup_sofun.html">prepare_setup_sofun()</a></code> </p>
+          <p><code><a href="p_model_validation_vcmax25.html">p_model_validation_vcmax25</a></code> </p>
         </td>
-        <td><p>Complements the setup settings</p></td>
+        <td><p>SOFUN p-model Vcmax25 validation data</p></td>
       </tr><tr><td>
           <p><code><a href="run_biomee_f_bysite.html">run_biomee_f_bysite()</a></code> </p>
         </td>

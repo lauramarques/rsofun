@@ -21,7 +21,7 @@
         <a class="external-link hidden-md hidden-lg" href="https://geco-group.org/">
           <img src="https://raw.githubusercontent.com/computationales/GECO_template/main/geco_logo_white_small.png" id="hexlogo" alt="GECO"></a>
         <a class="navbar-brand" href="../index.html">
-           <i>rsofun <small>v4.3</small></i>
+           <i>rsofun <small>v4.4.1</small></i>
         </a>
       </div>
     </div>
@@ -37,10 +37,10 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/biomee_model_structure.html">BiomeE model structure</a>
+      <a href="../articles/biomee_use.html">BiomeE usage</a>
     </li>
     <li>
-      <a href="../articles/biomee_use.html">BiomeE usage</a>
+      <a href="../articles/data_format.html">P-model data format</a>
     </li>
     <li>
       <a href="../articles/new_cost_function.html">Parameter calibration and cost functions</a>
@@ -49,7 +49,7 @@
       <a href="../articles/pmodel_use.html">P-model usage</a>
     </li>
     <li>
-      <a href="../articles/prepare_forcing.html">Prepare forcing</a>
+      <a href="../articles/sensitivity_analysis.html">Sensitivity analysis and calibration interpretation</a>
     </li>
   </ul></li>
 <li>
@@ -85,7 +85,6 @@
 <span>  <span class="va">params_siml</span>,</span>
 <span>  <span class="va">site_info</span>,</span>
 <span>  <span class="va">forcing</span>,</span>
-<span>  <span class="va">params_soil</span>,</span>
 <span>  <span class="va">params_modl</span>,</span>
 <span>  makecheck <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -107,25 +106,6 @@
 
       <dt>recycle</dt>
 <dd><p>Length of standard recycling period, in days.</p></dd>
-
-      <dt>soilmstress</dt>
-<dd><p>A logical value, if <code>TRUE</code> an empirical soil 
-      moisture stress function is applied to GPP.</p></dd>
-
-      <dt>tempstress</dt>
-<dd><p>A logical value, if <code>TRUE</code> an empirical temperature 
-      stress function is applied to GPP.</p></dd>
-
-      <dt>calc_aet_fapar_vpd</dt>
-<dd><p>(not in use)</p></dd>
-
-      <dt>in_ppfd</dt>
-<dd><p>A logical value, if <code>TRUE</code> PPFD is a prescribed variable, 
-      if <code>FALSE</code> PPFD is simulated internally.</p></dd>
-
-      <dt>in_netrad</dt>
-<dd><p>A logical value indicating whether net radiation is 
-      prescribed (<code>TRUE</code>) or simulated internally (<code>FALSE</code>).</p></dd>
 
       <dt>outdt</dt>
 <dd><p>An integer indicating the output periodicity.</p></dd>
@@ -152,12 +132,6 @@
       <dt>lgr4</dt>
 <dd><p>A logical value, <code>TRUE</code> if grass with C4 photosynthetic pathway.</p></dd>
 
-      <dt>firstyeartrend</dt>
-<dd><p>The year AD of first transient year.</p></dd>
-
-      <dt>nyeartrend</dt>
-<dd><p>The number of transient years.</p></dd>
-
 
 </dl></dd>
 
@@ -173,8 +147,8 @@
 <dd><p>Elevation of the site location, in meters.</p></dd>
 
       <dt>whc</dt>
-<dd><p>A numeric value for the water holding capacity (in mm), used for 
-      simulating the soil water balance.</p></dd>
+<dd><p>A numeric value for the total root zone water holding capacity (in mm), used
+      for simulating the soil water balance.</p></dd>
 
 
 </dl></dd>
@@ -182,49 +156,50 @@
 
 <dt>forcing</dt>
 <dd><p>A data frame of forcing climate data, used as input 
-(returned object by <code><a href="collect_drivers_sofun.html">collect_drivers_sofun</a></code>, see <code><a href="p_model_drivers.html">p_model_drivers</a></code>
+(see <code><a href="p_model_drivers.html">p_model_drivers</a></code>
 for a detailed description of its structure and contents).</p></dd>
-
-
-<dt>params_soil</dt>
-<dd><p>A list of soil texture parameters, for the top and bottom
-layer of soil.</p><dl><dt>fsand</dt>
-<dd><p>The fraction of sand in the soil.</p></dd>
-
-      <dt>fclay</dt>
-<dd><p>The fraction of clay in the soil.</p></dd>
-
-      <dt>forg</dt>
-<dd><p>The fraction of organic matter in the soil.</p></dd>
-
-      <dt>fgravel</dt>
-<dd><p>The fraction of gravel in the soil.</p></dd>
-
-
-</dl></dd>
 
 
 <dt>params_modl</dt>
 <dd><p>A named list of free (calibratable) model parameters.</p><dl><dt>kphio</dt>
-<dd><p>The quantum yield efficiency parameter, in mol mol\(^{-1}\).</p></dd>
+<dd><p>The quantum yield efficiency at optimal temperature \(\varphi_0\), 
+   in mol mol\(^{-1}\).
+   When temperature dependence is used, it corresponds to the multiplicative
+   parameter \(c\) (see Details).</p></dd>
 
-  <dt>soilm_par_a</dt>
-<dd><p>Intercept of the linear soil moisture stress function (unitless).</p></dd>
+  <dt>kphio_par_a</dt>
+<dd><p>The shape parameter \(a\) of the temperature-dependency of
+   quantum yield efficiency (see Details).
+   To disable the temperature dependence, set <code>kphio_par_a = 0</code>.</p></dd>
 
-  <dt>soilm_par_b</dt>
-<dd><p>Slope of the linear soil moisture stress function (unitless).</p></dd>
+  <dt>kphio_par_b</dt>
+<dd><p>The optimal temperature parameter \(b\) of the temperature
+   dependent quantum yield efficiency (see Details), in \(^o\)C.</p></dd>
 
-  <dt>tau_acclim_tempstress</dt>
-<dd><p>Memory e-folding time scale parameter (in hours)
-  for acclimation of photosynthesis, following Eq. 5 in Makela et al. (2004) 
-  Tree Physiology 24, 369–376</p></dd>
+  <dt>soilm_thetastar</dt>
+<dd><p>The threshold parameter \(\theta^{*}\) in the 
+   soil moisture stress function (see Details), given in mm.
+   To turn off the soil moisture stress, set <code>soilm_thetastar = 0</code>.</p></dd>
 
-  <dt>par_shape_tempstress</dt>
-<dd><p>Shape parameter for the low temperature stress
-  function affecting quantum yield efficiency. A positive (unitless) value indicating 
-  the sensitivity of the decline (assuming no decline at 10\(^o\)C) and 
-  above, but decreasing with a quadratic function below 10\(^o\)C).</p></dd>
+  <dt>soilm_betao</dt>
+<dd><p>The intercept parameter \(\beta_{0}\) in the
+   soil moisture stress function (see Details). This is the parameter calibrated 
+   in Stocker et al. 2020 GMD.</p></dd>
 
+  <dt>beta_unitcostratio</dt>
+<dd><p>The unit cost of carboxylation, corresponding to
+   \(\beta = b / a'\) in Eq. 3 of Stocker et al. 2020 GMD.</p></dd>
+
+  <dt>rd_to_vcmax</dt>
+<dd><p>Ratio of Rdark (dark respiration) to Vcmax25.</p></dd>
+
+  <dt>tau_acclim</dt>
+<dd><p>Acclimation time scale of photosynthesis, in days.</p></dd>
+
+  <dt>kc_jmax</dt>
+<dd><p>Parameter for Jmax cost ratio (corresponding to c\(^*\) in
+  Stocker et al. 2020 GMD).</p></dd>
+ 
 
 </dl></dd>
 
@@ -258,14 +233,14 @@ Defaults to <code>TRUE</code>.</p></dd>
 <dd><p>Gross Primary Productivity (GPP) for each time stamp 
       (in gC m\(^{-2}\) d\(^{-1}\)).</p></dd>
 
-  <dt><code>transp</code></dt>
-<dd><p>Actual evapotranspiration (AET) (in mm d\(^{-1}\)).</p></dd>
+  <dt><code>aet</code></dt>
+<dd><p>Actual evapotranspiration (AET), calculated by SPLASH following Priestly-Taylor (in mm d\(^{-1}\)).</p></dd>
 
-  <dt><code>latenth</code></dt>
+  <dt><code>le</code></dt>
 <dd><p>Latent heat flux (in J m\(^{-2}\) d\(^{-1}\)).</p></dd>
 
   <dt><code>pet</code></dt>
-<dd><p>Potential evapotranspiration (PET) (in mm d\(^{-1}\)).</p></dd>
+<dd><p>Potential evapotranspiration (PET), calculated by SPLASH following Priestly-Taylor (in mm d\(^{-1}\)).</p></dd>
 
   <dt><code>vcmax</code></dt>
 <dd><p>Maximum rate of RuBisCO carboxylation 
@@ -285,7 +260,7 @@ Defaults to <code>TRUE</code>.</p></dd>
 
   <dt><code>gs_accl</code></dt>
 <dd><p>Acclimated stomatal conductance (in 
-      mol C m\(^{−2}\) d\(^{−1}\) Pa\(^{−1}\)).</p></dd>
+      mol C m\(^{-2}\) d\(^{-1}\) Pa\(^{-1}\)).</p></dd>
 
   <dt><code>wscal</code></dt>
 <dd><p>Relative soil water content, between 0 (permanent wilting 
@@ -303,9 +278,80 @@ Defaults to <code>TRUE</code>.</p></dd>
   <dt><code>tsoil</code></dt>
 <dd><p>Soil temperature, in \(^{o}\)C.</p></dd>
 
+  <dt><code>netrad</code></dt>
+<dd><p>Net radiation, in W m\(^{-2}\). WARNING: this is currently ignored as a model forcing. Instead, net radiation is internally calculated by SPLASH.</p></dd>
+
+  <dt><code>wcont</code></dt>
+<dd><p>Soil water content, in mm.</p></dd>
+
+  <dt><code>snow</code></dt>
+<dd><p>Snow water equivalents, in mm.</p></dd>
+
+  <dt><code>cond</code></dt>
+<dd><p>Water input by condensation, in mm d\(^{-1}\)</p></dd>
+
   
 </dl></div>
+    <div id="details">
+    <h2>Details</h2>
+    <p>Depending on the input model parameters, it's possible to run the 
+different P-model setups presented in Stocker et al. 2020 GMD. The P-model
+version implemented in this package allows more flexibility than the one
+presented in the paper, with the following functions:</p>
+<p>The temperature dependence of the quantum yield efficiency is given by: <br>
+\(\varphi_0 (T) = c (1 + a (T - b)^2 ) \) if \(0 &lt; c (1 + a (T - b)^2 ) &lt; 1\), <br>
+\(\varphi_0 (T) = 0 \) if \( c (1 + a (T - b)^2 ) \leq 0\), and  <br>
+\(\varphi_0 (T) = 1 \) if \( c (1 + a (T - b)^2 ) \geq 1\). <br>
+The ORG setup can be reproduced by setting <code>kphio_par_a = 0</code>
+and calibrating the <code>kphio</code> parameter only.
+The BRC setup (which calibrates \(c_L = \frac{a_L b_L}{4}\) in Eq. 18) is more difficult to reproduce, 
+since the temperature-dependency has been reformulated and a custom cost
+function would be necessary for calibration. The new parameters
+are related to \(c_L\) as follows: <br>
+\(a = -0.0004919819\) <br>
+\(b = 32.35294\) <br>
+\(c = 0.6910823 c_L\)</p>
+<p>The soil moisture stress is implemented as <br>
+\(\beta(\theta) = \frac{\beta_0 - 1}{{\theta^{*}}^2} 
+   (\theta - \theta^{*})^2 + 1 \) if 
+   \( 0 \leq \theta \leq \theta^{*}\) and <br>
+\(\beta(\theta) = 1\) if \( \theta &gt; \theta^{*}\). <br>
+In Stocker et al. 2020 GMD, the threshold plant-available soil water is set as
+\(\theta^{*}\) 
+<code>= 0.6 * whc</code> where <code>whc</code> is the site's water holding capacity. Also,
+the \(\beta\) reduction at low soil moisture (\(\beta_0 = \beta(0)\)) was parameterized
+as a linear function of mean aridity (Eq. 20 in Stocker et al. 2020 GMD) but is
+considered a constant model parameter in this package. 
+Hence, the FULL calibration setup cannot be 
+exactly replicated.</p>
+    </div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Define model parameter values from previous work</span></span></span>
+<span class="r-in"><span><span class="va">params_modl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  kphio              <span class="op">=</span> <span class="fl">0.04998</span>,    <span class="co"># setup ORG in Stocker et al. 2020 GMD</span></span></span>
+<span class="r-in"><span>  kphio_par_a        <span class="op">=</span> <span class="fl">0.0</span>,        <span class="co"># disable temperature-dependence of kphio</span></span></span>
+<span class="r-in"><span>  kphio_par_b        <span class="op">=</span> <span class="fl">1.0</span>,</span></span>
+<span class="r-in"><span>  soilm_thetastar    <span class="op">=</span> <span class="fl">0.6</span> <span class="op">*</span> <span class="fl">240</span>,  <span class="co"># old setup with soil moisture stress</span></span></span>
+<span class="r-in"><span>  soilm_betao        <span class="op">=</span> <span class="fl">0.0</span>,</span></span>
+<span class="r-in"><span>  beta_unitcostratio <span class="op">=</span> <span class="fl">146.0</span>,</span></span>
+<span class="r-in"><span>  rd_to_vcmax        <span class="op">=</span> <span class="fl">0.014</span>,      <span class="co"># from Atkin et al. 2015 for C3 herbaceous</span></span></span>
+<span class="r-in"><span>  tau_acclim         <span class="op">=</span> <span class="fl">30.0</span>,</span></span>
+<span class="r-in"><span>  kc_jmax            <span class="op">=</span> <span class="fl">0.41</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Run the Fortran P-model </span></span></span>
+<span class="r-in"><span><span class="va">mod_output</span> <span class="op">&lt;-</span> <span class="fu">run_pmodel_f_bysite</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="co"># unnest drivers example data</span></span></span>
+<span class="r-in"><span>  sitename <span class="op">=</span> <span class="va">p_model_drivers</span><span class="op">$</span><span class="va">sitename</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  params_siml <span class="op">=</span> <span class="va">p_model_drivers</span><span class="op">$</span><span class="va">params_siml</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  site_info <span class="op">=</span> <span class="va">p_model_drivers</span><span class="op">$</span><span class="va">site_info</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  forcing <span class="op">=</span> <span class="va">p_model_drivers</span><span class="op">$</span><span class="va">forcing</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  params_modl <span class="op">=</span> <span class="va">params_modl</span></span></span>
+<span class="r-in"><span> <span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
