@@ -133,7 +133,11 @@ simulated values used to compute the RMSE.</p>
 <span class="r-in"><span> obs <span class="op">=</span> <span class="va">biomee_validation</span>,</span></span>
 <span class="r-in"><span> drivers <span class="op">=</span> <span class="va">biomee_gs_leuning_drivers</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9676509</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There was 1 warning in `dplyr::summarise()`.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> In argument: `Density = mean(Density12, na.rm = TRUE)`.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Caused by warning in `mean.default()`:</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> argument is not numeric or logical: returning NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9628116</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
