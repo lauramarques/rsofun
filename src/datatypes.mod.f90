@@ -356,6 +356,8 @@ module datatypes
     real    :: annualNup                                                          ! accumulated N uptake kgN m-2 yr-1
     real    :: annualfixedN  = 0.0                                                ! fixed N in a tile
 
+    real :: WDgrow, WDmort, WDrepr, WDkill ! for DBEN wood fluxes
+
     !===== Annual reporting at tile level
     type(orgpool) :: pleaf                       ! leaf biomass [kg C m-2]
     type(orgpool) :: proot                       ! root biomass [kg C m-2]
@@ -1170,8 +1172,11 @@ contains
     out_annual_cohorts(:)%deathrate   = dummy
 
     ! Cohorts ouput
+    vegn%WDgrow = 0.0
     do i = 1, vegn%n_cohorts
       cc => vegn%cohorts(i)
+      associate ( sp => spdata(cc%species))
+      if(sp%lifeform == 1) vegn%WDgrow = vegn%WDgrow + cc%NPPwood * cc%nindivs
       treeG     = cc%pseed%c%c12 + cc%NPPleaf + cc%NPProot + cc%NPPwood
       fseed     = cc%pseed%c%c12 / treeG
       fleaf     = cc%NPPleaf / treeG
@@ -1217,7 +1222,8 @@ contains
       out_annual_cohorts(i)%n_deadtrees = cc%n_deadtrees ! dead trees/m2
       out_annual_cohorts(i)%c_deadtrees = cc%c_deadtrees
       out_annual_cohorts(i)%deathrate   = cc%deathratevalue
-
+      
+      end associate
     enddo
 
     ! tile pools output
@@ -1305,6 +1311,10 @@ contains
     out_annual_tile%c_deadtrees     = vegn%c_deadtrees
     out_annual_tile%m_turnover      = vegn%m_turnover
     out_annual_tile%c_turnover_time = vegn%pwood%c%c12 / vegn%NPPW
+    out_annual_tile%WDgrow          = vegn%WDgrow
+    out_annual_tile%WDmort          = vegn%WDmort
+    out_annual_tile%WDrepr          = vegn%WDrepr
+    out_annual_tile%WDkill          = vegn%WDkill
 
     ! I cannot figure out why N losing. Hack!
     if (myinterface%params_siml%do_closedN_run) call Recover_N_balance(vegn)

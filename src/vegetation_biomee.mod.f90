@@ -796,6 +796,7 @@ contains
  
     else
 
+      vegn%WDmort = 0.0
       do i = 1, vegn%n_cohorts
         cc => vegn%cohorts(i)
         associate ( sp => spdata(cc%species))
@@ -882,6 +883,8 @@ contains
 
         ! Update plant density
         cc%nindivs = cc%nindivs - deadtrees
+        ! Record wood C mortality
+        if(sp%lifeform == 1) vegn%WDmort = vegn%WDmort + (cc%psapw%c%c12 + cc%pwood%c%c12)*deadtrees
         ! vegn%n_deadtrees = deadtrees
         ! vegn%c_deadtrees = vegn%c_deadtrees + deadtrees*(cc%plabl%c%c12 + cc%pseed%c%c12 + cc%pleaf%c%c12 + cc%proot%c%c12 + cc%psapw%c%c12 + cc%pwood%c%c12)
         end associate
@@ -1007,6 +1010,7 @@ contains
     integer :: i, k ! cohort indices
 
     ! Looping through all reproductable cohorts and Check if reproduction happens
+    vegn%WDrepr = 0.0
     reproPFTs = -999 ! the code of reproductive PFT
     vegn%totseedC = 0.0
     vegn%totseedN = 0.0
@@ -1121,6 +1125,8 @@ contains
           cc%psapw%n%n14 + cc%pwood%n%n14 + cc%plabl%n%n14)
 
         call init_cohort_allometry( cc )
+        ! Record wood C in seedlings
+        if(sp%lifeform == 1) vegn%WDrepr = vegn%WDrepr + (cc%psapw%c%c12 + cc%pwood%c%c12)*cc%nindivs
         !        ! seeds fail
         !cc%nindivs = cc%nindivs * sp%prob_g * sp%prob_e
         !       put failed seeds to soil carbon pools
@@ -1174,7 +1180,7 @@ contains
   end function
 
 
-  subroutine vegn_species_switch(vegn, N_SP, iyears, FREQ)
+  subroutine vegn_species_switch(vegn, N_SP, iyears, FREQ) !!xxxx where it is called?
     !////////////////////////////////////////////////////////////////
     ! switch the species of the first cohort to another species
     ! bugs !!!!!!
@@ -1220,7 +1226,7 @@ contains
       cc%pleaf%c%c12 = 0.0
 
       ! record continuous biomass turnover (not linked to mortality)
-      ! cc%m_turnover = cc%m_turnover + loss_coarse + loss_fine XXX don't add anything if only considering wood
+      cc%m_turnover = cc%m_turnover + loss_coarse + loss_fine !XXX don't add anything if only considering wood
 
     endif
     end associate
@@ -1466,8 +1472,8 @@ contains
       vegn%N_P2S_yr = vegn%N_P2S_yr + lossN_fine + lossN_coarse
 
       ! record continuous biomass turnover (not linked to mortality)
-      ! cc%m_turnover = cc%m_turnover + loss_coarse + loss_fine
-      cc%m_turnover = cc%m_turnover + (1.0 - l_fract) * cc%nindivs * dBStem
+      cc%m_turnover = loss_coarse + loss_fine
+      !cc%m_turnover = cc%m_turnover + (1.0 - l_fract) * cc%nindivs * dBStem
 
       end associate
     enddo
@@ -1862,6 +1868,7 @@ contains
     !endif
     
     ! exclude cohorts that have low individuals
+    vegn%WDkill = 0.0
     if (k > 0 .and. k < vegn%n_cohorts) then
       allocate(cc(k))
       k = 0
@@ -1872,6 +1879,8 @@ contains
           k = k + 1
           cc(k) = cx
         else
+        ! Record wood killed
+          if(sp%lifeform == 1) vegn%WDkill = vegn%WDkill + (cx%psapw%c%c12 + cx%pwood%c%c12)*cx%nindivs
           ! Carbon and Nitrogen from plants to soil pools
           call plant2soil(vegn, cx, cx%nindivs)
         endif
@@ -2073,8 +2082,9 @@ contains
     cc => null()
 
     ! Relayering and summary
-    call relayer_cohorts(vegn)
-    call summarize_tile(vegn)
+    call initialize_vegn_tile(vegn)
+    !call relayer_cohorts(vegn)
+    !call summarize_tile(vegn)
 
     ! ID each cohort
     do i=1, vegn%n_cohorts

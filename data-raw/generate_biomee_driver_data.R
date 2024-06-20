@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+# set up ----
+
 library(tidyverse)
 library(rsofun)
 
@@ -252,11 +254,11 @@ biomee_gs_leuning_output_annual_tile <- out$data[[1]]$output_annual_tile
 biomee_gs_leuning_output_annual_cohorts <- out$data[[1]]$output_annual_cohorts
 
 cowplot::plot_grid(
-  biomee_gs_leuning_output %>% 
+  biomee_gs_leuning_output_annual_tile %>% 
     ggplot() +
     geom_line(aes(x = year, y = GPP)) +
     theme_classic()+labs(x = "Year", y = "GPP"),
-  biomee_gs_leuning_output %>% 
+  biomee_gs_leuning_output_annual_tile %>% 
     ggplot() +
     geom_line(aes(x = year, y = plantC)) +
     theme_classic()+labs(x = "Year", y = "plantC")
@@ -268,7 +270,7 @@ biomee_gs_leuning_output_annual_cohorts %>% group_by(PFT,year) %>%
   geom_line(aes(x = year, y = npp,col=PFT)) +
   theme_classic()+labs(x = "Year", y = "NPP")
 
-save(biomee_gs_leuning_output,
+save(out,
      file ="data/biomee_gs_leuning_output.rda",
      compress = "xz")
 
@@ -282,11 +284,11 @@ biomee_p_model_output_annual_tile <- out$data[[1]]$output_annual_tile
 biomee_p_model_output_annual_cohorts <- out$data[[1]]$output_annual_cohorts
 
 cowplot::plot_grid(
-  biomee_p_model_output %>% 
+  biomee_p_model_output_annual_tile %>% 
     ggplot() +
     geom_line(aes(x = year, y = GPP)) +
     theme_classic()+labs(x = "Year", y = "GPP"),
-  biomee_p_model_output %>% 
+  biomee_p_model_output_annual_tile %>% 
     ggplot() +
     geom_line(aes(x = year, y = plantC)) +
     theme_classic()+labs(x = "Year", y = "plantC")
@@ -298,7 +300,7 @@ biomee_p_model_output_annual_cohorts %>% group_by(PFT,year) %>%
   geom_line(aes(x = year, y = npp,col=PFT)) +
   theme_classic()+labs(x = "Year", y = "NPP")
 
-save(biomee_p_model_output,
+save(out,
      file = "data/biomee_p_model_output.rda",
      compress = "xz")
 
