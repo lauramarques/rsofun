@@ -135,6 +135,13 @@ module datatypes
     real    :: prob_g,prob_e                      ! germination and establishment probabilities
     real    :: mortrate_d_c                       ! yearly mortality rate in canopy
     real    :: mortrate_d_u                       ! yearly mortality rate in understory
+    real    :: r0mort_c
+    real    :: D0mu
+    real    :: A_un 
+    real    :: A_sd 
+    real    :: B_sd 
+    real    :: A_D 
+    real    :: s_hu 
 
     !===== Population level variables
     real    :: LAImax, underLAImax                ! max. LAI
@@ -303,6 +310,7 @@ module datatypes
     real    :: n_deadtrees        = 0.0
     real    :: c_deadtrees        = 0.0
     real    :: m_turnover         = 0.0
+    real    :: m2_turnover        
 
     !=====  N-related fluxes
     real    :: totN               = 0.0
@@ -356,7 +364,7 @@ module datatypes
     real    :: annualNup                                                          ! accumulated N uptake kgN m-2 yr-1
     real    :: annualfixedN  = 0.0                                                ! fixed N in a tile
 
-    real :: WDgrow, WDmort, WDrepr, WDkill ! for DBEN wood fluxes
+    real :: WDgrow, WDmort, WDrepr, WDkill, WDdstb ! for DBEN wood fluxes
 
     !===== Annual reporting at tile level
     type(orgpool) :: pleaf                       ! leaf biomass [kg C m-2]
@@ -499,6 +507,13 @@ module datatypes
   !===== Mortality
   ! real :: mortrate_d_c(0:MSPECIES) = 0.01 ! yearly
   ! real :: mortrate_d_u(0:MSPECIES) = 0.075
+  real :: r0mort_c(0:MSPECIES) = 0.01 ! yearly
+  real :: D0mu(0:MSPECIES)     = 1.2 ! 2.0     ! m, Mortality curve parameter
+  real :: A_un(0:MSPECIES)     = 1.0     ! Multiplier for understory mortality
+  real :: A_sd(0:MSPECIES)     = 9.0     ! Max multiplier for seedling mortality
+  real :: B_sd(0:MSPECIES)     = -20.    ! Mortality sensitivity for seedlings
+  real :: A_D(0:MSPECIES)      = 4.0   ! Sensitivity to dbh
+  real :: s_hu(0:MSPECIES)     = -25.0 ! hydraulic mortality sensitivity
 
   !===== Leaf parameters
   ! real :: LMA(0:MSPECIES)         = 0.035  ! (Simulations: 0.035, 0.085, 0.135) leaf mass per unit area, kg C/m2 LMA = 1/SLA 0.05 for Fagus
@@ -625,6 +640,14 @@ contains
     ! Mortality parameters
     spdata(0:MSPECIES)%mortrate_d_c  = myinterface%params_species(1:(MSPECIES+1))%mortrate_d_c
     spdata(0:MSPECIES)%mortrate_d_u  = myinterface%params_species(1:(MSPECIES+1))%mortrate_d_u
+    spdata(0:MSPECIES)%r0mort_c      = r0mort_c
+    spdata(0:MSPECIES)%D0mu          = D0mu
+    spdata(0:MSPECIES)%A_un          = r0mort_c
+    spdata(0:MSPECIES)%A_sd          = A_sd
+    spdata(0:MSPECIES)%B_sd          = B_sd
+    spdata(0:MSPECIES)%A_D           = A_D
+    spdata(0:MSPECIES)%s_hu          = s_hu
+
     ! Plant traits
     spdata(0:MSPECIES)%LMA           = myinterface%params_species(1:(MSPECIES+1))%LMA ! leaf mass per unit area, kg C/m2
     spdata(0:MSPECIES)%leafLS        = myinterface%params_species(1:(MSPECIES+1))%leafLS

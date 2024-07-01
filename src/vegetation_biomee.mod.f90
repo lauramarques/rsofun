@@ -695,7 +695,7 @@ contains
   end subroutine Seasonal_fall
 
 
-  subroutine vegn_nat_mortality (vegn)
+  subroutine vegn_nat_mortality (vegn, deltat)
     !////////////////////////////////////////////////////////////////
     ! Determines mortality and updates tile
     !---------------------------------------------------------------
@@ -703,16 +703,18 @@ contains
     
     !   TODO: update background mortality rate as a function of wood density (Weng, Jan. 07 2017)
     type(vegn_tile_type), intent(inout) :: vegn
-    ! real, intent(in) :: deltat ! seconds since last mortality calculations, s
+    real, intent(in) :: deltat ! seconds since last mortality calculations, s
 
     ! ---- local vars
     type(cohort_type), pointer :: cc => null()
-    ! type(spec_data_type),   pointer :: sp
+    type(spec_data_type),   pointer :: sp
 
     ! integer :: idx(vegn%n_cohorts)
     real :: deathrate = 0 ! mortality rate, 1/year
     real :: deadtrees ! number of trees that died over the time step
     integer :: totCC,i,k
+    real :: f_L, f_S, f_D ! Layer, seeding, and size effects on mortality
+    real :: expD, m_S ! Mortality multiplier for size effects
 
     ! real :: nindivs_new, frac_new
     real, dimension(:), allocatable :: cai_partial != 0.0 !max_cohorts
@@ -858,22 +860,38 @@ contains
                      (1.0 +        exp(B_mort*cc%dbh)) 
 
             else  ! First layer mortality Weng 2015: deathrate = 0.01*(1+5*exp(4*(cc%dbh-2)))/(1+exp(4*(cc%dbh-2)))
+                  ! Other fc: deathrate = param_dbh * 0.1 * (1.*exp(2.*(cc%dbh-1))/(1. + exp(2.*(cc%dbh-1))))
               if (myinterface%params_siml%do_U_shaped_mortality) then
-                ! deathrate = param_dbh * 0.1 *    &
-                !            (1.*exp(2.*(cc%dbh-1))/  &
-                !            (1. + exp(2.*(cc%dbh-1))))
+              
+              !!! 1) GFDY version --------------------------------------------
                 deathrate = min(1.0, param_dbh * cc%dbh ** 1.5) ! 1.5, 2.5, 5
               else
-                deathrate = sp%mortrate_d_c !0.01
+                deathrate = sp%mortrate_d_c
               endif
+              
+              !!! or 2) Ensheng update ---------------------------------------
+                !m_S = 5.0
+              !else
+                !m_S = 0.0
+              !endif
+
+              !f_L  = sp%A_un * SQRT(Max(0.0, cc%layer - 1.0)) ! Layer effects (0~ infinite)
+              !f_S  = sp%A_sd * exp(sp%B_sd*cc%dbh) + 1.0      ! Understory seedling
+              !expD = exp(sp%A_D * (cc%dbh - sp%D0mu))
+              
+              !f_D  = 1. + m_S * expD / (1. + expD) ! Size effects (big tees)
+
+              ! Return mortality rate:
+              !deathrate = min(0.5,sp%r0mort_c * (1.d0+f_L*f_S)*f_D) ! per year
+              !!! ------------------------------------------------------------
+            
             endif
-          endif
-         
+          endif 
         endif
 
         ! previous setup allowed death rates > 1 (hence negative ind)
-        deathrate = min(1.0, deathrate + 0.01)  
-        deadtrees = cc%nindivs * deathrate
+        ! deathrate = min(1.0, deathrate)  
+        deadtrees = cc%nindivs * deathrate * deltat/seconds_per_year ! individuals / m2
 
         ! record mortality rates at cohort level
         cc%deathratevalue = deathrate
@@ -883,20 +901,21 @@ contains
 
         ! Update plant density
         cc%nindivs = cc%nindivs - deadtrees
+
         ! Record wood C mortality
         if(sp%lifeform == 1) vegn%WDmort = vegn%WDmort + (cc%psapw%c%c12 + cc%pwood%c%c12)*deadtrees
         ! vegn%n_deadtrees = deadtrees
         ! vegn%c_deadtrees = vegn%c_deadtrees + deadtrees*(cc%plabl%c%c12 + cc%pseed%c%c12 + cc%pleaf%c%c12 + cc%proot%c%c12 + cc%psapw%c%c12 + cc%pwood%c%c12)
         end associate
       enddo
+      call summarize_tile(vegn)
 
       ! Remove the cohorts with very few individuals
-      call kill_lowdensity_cohorts( vegn )
+      ! call kill_lowdensity_cohorts( vegn )
 
     endif
 
   end subroutine vegn_nat_mortality
-
 
   subroutine vegn_annual_starvation( vegn ) ! Annual
     !////////////////////////////////////////////////////////////////
@@ -960,6 +979,8 @@ contains
 
     associate (sp => spdata(cc%species))
 
+    ! vegn%m2_turnover = 0.0
+
     ! Carbon and Nitrogen from plants to soil pools
     loss_coarse  = deadtrees * (cc%pwood%c%c12 + cc%psapw%c%c12 + cc%pleaf%c%c12 - cc%leafarea * LMAmin)
     loss_fine    = deadtrees * (cc%plabl%c%c12 + cc%pseed%c%c12 + cc%proot%c%c12 + cc%leafarea * LMAmin)
@@ -976,6 +997,9 @@ contains
     ! annual N from plants to soil
     vegn%N_P2S_yr = vegn%N_P2S_yr + lossN_fine + lossN_coarse
 
+    ! Record turnover vegn
+    ! vegn%m2_turnover = vegn%m2_turnover + loss_coarse + loss_fine
+
     ! record mortality
     ! cohort level
     cc%n_deadtrees = deadtrees
@@ -988,7 +1012,6 @@ contains
     end associate
 
   end subroutine plant2soil
-
 
   subroutine vegn_reproduction( vegn )
     !////////////////////////////////////////////////////////////////
@@ -1200,6 +1223,8 @@ contains
     cc => vegn%cohorts(1)
     associate (sp => spdata(cc%species))
 
+    ! vegn%m2_turnover = 0.0
+
     if (cc%pleaf%c%c12 > 0.0) then 
       ! remove all leaves to keep mass balance
       loss_coarse  = cc%nindivs * (cc%pleaf%c%c12 - cc%leafarea * LMAmin)
@@ -1218,6 +1243,9 @@ contains
         fsc_wood * lossN_coarse
       vegn%psoil_sl%n%n14 = vegn%psoil_sl%n%n14 +(1.0 - fsc_fine) * lossN_fine +   &
         (1.0 - fsc_wood) * lossN_coarse
+
+      ! record turnover vegn
+      ! vegn%m2_turnover = vegn%m2_turnover + loss_coarse + loss_fine
 
       ! annual N from plants to soil
       vegn%N_P2S_yr = vegn%N_P2S_yr + lossN_fine + lossN_coarse
@@ -1394,6 +1422,8 @@ contains
     real :: dAleaf ! leaf area decrease due to dBL
     integer :: i
 
+    !vegn%m2_turnover = 0.0
+
     ! update plant carbon and nitrogen for all cohorts
     do i = 1, vegn%n_cohorts
       cc => vegn%cohorts(i)
@@ -1467,6 +1497,9 @@ contains
 
       vegn%psoil_sl%n%n14 = vegn%psoil_sl%n%n14 + &
         (1.0 - fsc_fine) * lossN_fine + (1.0 - fsc_wood) * lossN_coarse
+
+      ! Record turnover vegn
+      ! vegn%m2_turnover = vegn%m2_turnover + loss_coarse + loss_fine
 
       ! annual N from plants to soil
       vegn%N_P2S_yr = vegn%N_P2S_yr + lossN_fine + lossN_coarse
@@ -2061,39 +2094,74 @@ contains
   end subroutine initialize_cohort_from_biomass
 
   !============= Reset to Initial Vegetation States =====================
-   !Weng, 12/20/2022
-   subroutine reset_vegn_initial(vegn)
-    type(vegn_tile_type),intent(inout),pointer :: vegn
+  ! !Weng, 12/20/2022
+  ! subroutine reset_vegn_initial(vegn)
+  !  type(vegn_tile_type),intent(inout),pointer :: vegn
+!
+!  !  !--------local vars -------
+!  !  type(cohort_type),dimension(:), pointer :: cc,cc1
+!  !  type(cohort_type), pointer :: cp
+!  !  integer :: i, istat
+!  !  real :: WDtot
+!
+!  !  !Reset to initial plant cohorts
+!  !  allocate(cc(1:vegn%n_initialCC), STAT = istat)
+!  !  cc1 => vegn%cohorts ! Remember the current cohorts in vegn
+!  !  cc = vegn%initialCC ! Copy the initial cohorts to a new cohor array
+!  !  vegn%cohorts => cc  ! Set the vegn%cohorts as the initial cohorts
+!  !  vegn%n_cohorts = vegn%n_initialCC ! size(vegn%cohorts)
+!
+!  !  !Release memory
+!  !  deallocate(cc1) ! Remove the old cohorts
+!  !  cc => null()
+!
+!  !  ! Relayering and summary
+!  !  call initialize_vegn_tile(vegn)
+!  !  !call relayer_cohorts(vegn)
+!  !  !call summarize_tile(vegn)
+!
+!  !  ! ID each cohort
+!  !  do i=1, vegn%n_cohorts
+!  !     cp => vegn%cohorts(i)
+!  !     cp%ccID = MaxCohortID + i
+!  !  enddo
+!  !  MaxCohortID = cp%ccID
+!
+  ! end subroutine reset_vegn_initial
 
-    !--------local vars -------
-    type(cohort_type),dimension(:), pointer :: cc,cc1
-    type(cohort_type), pointer :: cp
-    integer :: i, istat
 
-    !Reset to initial plant cohorts
-    allocate(cc(1:vegn%n_initialCC), STAT = istat)
-    cc1 => vegn%cohorts ! Remember the current cohorts in vegn
-    cc = vegn%initialCC ! Copy the initial cohorts to a new cohor array
-    vegn%cohorts => cc  ! Set the vegn%cohorts as the initial cohorts
-    vegn%n_cohorts = vegn%n_initialCC ! size(vegn%cohorts)
+!Weng, 12/20/2022, Reset to Initial Vegetation States
+subroutine reset_vegn_initial(vegn)
+   type(vegn_tile_type),intent(inout),pointer :: vegn
 
-    !Release memory
-    deallocate(cc1) ! Remove the old cohorts
-    cc => null()
+   !--------local vars -------
+   type(cohort_type),dimension(:), pointer :: cc1
+   type(cohort_type), pointer :: cp
+   real :: WDtot
+   integer :: i
 
-    ! Relayering and summary
-    call initialize_vegn_tile(vegn)
-    !call relayer_cohorts(vegn)
-    !call summarize_tile(vegn)
+   ! Keep old cohorts
+   cc1 => vegn%cohorts
+   !call summarize_tile(vegn) !xxx
+   WDtot =  vegn%psapw%c%c12 + vegn%pwood%c%c12
+   !Reset to initial plant cohorts
+   call initialize_vegn_tile(vegn)
+   ! Relayering and summary
+   !call relayer_cohorts(vegn) !xxx
+   !call summarize_tile(vegn)  !xxx 
+   vegn%WDdstb = WDtot - vegn%psapw%c%c12 - vegn%pwood%c%c12
+   ! ID each cohort
+   do i=1, vegn%n_cohorts
+      cp => vegn%cohorts(i)
+      cp%ccID = MaxCohortID + i
+   enddo
+   MaxCohortID = cp%ccID
+   !write(*,*)"Vegetaion resetted to initial conditions!"
 
-    ! ID each cohort
-    do i=1, vegn%n_cohorts
-       cp => vegn%cohorts(i)
-       cp%ccID = MaxCohortID + i
-    enddo
-    MaxCohortID = cp%ccID
+   ! Release old cohorts
+   deallocate(cc1)
+end subroutine reset_vegn_initial
 
-   end subroutine reset_vegn_initial
 
   ! subroutine annual_calls( vegn )
   !   !////////////////////////////////////////////////////////////////
