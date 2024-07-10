@@ -345,6 +345,7 @@ contains
         cc%plabl%c%c12    = cc%plabl%c%c12 - dBR - dBL - dSeed - dBSW
         cc%leaf_age = (1.0 - dBL/cc%pleaf%c%c12) * cc%leaf_age !NEW
         cc%resg = 0.5 * (dBR + dBL + dSeed + dBSW) !  daily
+        !vegn%WDgrow = vegn%WDgrow + dBSW *cc%nindivs
 
         ! update nitrogen pools, Nitrogen allocation
         cc%pleaf%n%n14 = cc%pleaf%n%n14 + dBL   /sp%CNleaf0

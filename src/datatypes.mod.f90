@@ -1257,6 +1257,7 @@ contains
     vegn%n_deadtrees = 0 
     vegn%c_deadtrees = 0
     vegn%m_turnover  = 0
+    !vegn%WDgrow      = 0.0
 
     do i = 1, vegn%n_cohorts
       cc => vegn%cohorts(i)
